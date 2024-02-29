@@ -29,6 +29,7 @@ public:
     typedef int(__stdcall* hooktype_scn_mainloop)(void*, void*);
     //typedef int(*hooktype_scn_janken)(char a, int i);
     //typedef int(*hooktype_scn_duel)(char a, int i);
+    typedef int(__cdecl* hooktype_duelstart)(int);
 
     // The rest (tm)
     YGO2(int ver);
@@ -44,6 +45,7 @@ public:
     hooktype_debuglog_verb   debuglogVerbHook;
 
     hooktype_scn_mainloop   sceneMainLoopHook;
+    hooktype_duelstart      duelStartHook;
 
     // detour functions
     static void debug_log(char* msg, ...);
@@ -54,4 +56,5 @@ public:
     static int __fastcall debug_log_verb(void* _this, int a, const char* b, unsigned int c);
 
     static int __fastcall scene_mainloop_reimpl(void* _this, void* x, int sceneNumber);
+    static int __cdecl duel_start_reimpl(int mode);
 };

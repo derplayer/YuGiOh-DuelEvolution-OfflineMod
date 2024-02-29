@@ -1,83 +1,17 @@
-﻿#include "YGO2.h"
+﻿#pragma warning(disable:26495)
+
+#include "YGO2.h"
 static int ygoVer = 0;
 
-// trampoline returns
+// ### Trampoline returns
 static YGO2::hooktype_fprintf fprintfHook_Return = nullptr;
 static YGO2::hooktype_sprintf sprintfHook_Return = nullptr;
-static YGO2::hooktype_scn_mainloop sceneMainLoopHook_Return = nullptr;
 static YGO2::hooktype_debuglog_verb debuglogVerbHook_Return = nullptr;
 
-// haax O_O
-int(__thiscall* scene_mainloop)(void*, int);
+static YGO2::hooktype_scn_mainloop sceneMainLoopHook_Return = nullptr;
+static YGO2::hooktype_duelstart duelStartHook_Return = nullptr;
 
-YGO2::YGO2(int ver) {
-    ygoVer = ver;
-
-    switch (ver)
-    {
-        case YGO2_2006_10:
-            break;
-        case YGO2_2008_01:
-            debuglogHook = hooktype_debuglog(DEBUG_LOG_ADDR_200801);
-            debuglogNetworkHook = hooktype_debuglog_net(DEBUG_LOG_ADDR_NETWORK_200801);
-            printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200801);
-            fprintfHook = hooktype_fprintf(DEBUG_LOG_FPRINTF_200801);
-            sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200801);
-            debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200801);
-
-            //sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200801);
-            break;
-        case YGO2_2008_11:
-            debuglogHook = hooktype_debuglog(DEBUG_LOG_ADDR_200811);
-            debuglogNetworkHook = hooktype_debuglog_net(DEBUG_LOG_ADDR_NETWORK_200811);
-            printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200811);
-            fprintfHook = hooktype_fprintf(DEBUG_LOG_FPRINTF_200811);
-            sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200811);
-            debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200811);
-
-            sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200811);
-            duelHook = hooktype_duelscene(DUEL_ADDR_200811);
-            break;
-        default:
-            MessageBoxW(0, L"This YGO2 game version is not yet supported by the DLL plugin. Please submit it.", L"", 0);
-            return;
-    }
-    MH_STATUS dlogRes;
-
-    // BASE #00 - Stub log restoration Hook
-    dlogRes = MH_CreateHook(debuglogHook, &debug_log, NULL);
-    if(dlogRes == MH_OK) MH_EnableHook(debuglogHook);
-
-    // BASE #01 - Network log
-    dlogRes = MH_CreateHook(debuglogNetworkHook, &network_response_log_stub, NULL);
-    if (dlogRes == MH_OK) MH_EnableHook(debuglogNetworkHook);
-
-    // BASE #02 - printf
-    dlogRes = MH_CreateHook(printfHook, &debug_log_buffer_ret, NULL);
-    if (dlogRes == MH_OK) MH_EnableHook(printfHook);
-
-    // BASE #03 - fprintf - needs tramp. return
-    dlogRes = MH_CreateHook(fprintfHook, &fprint_reimpl, reinterpret_cast<LPVOID*>(&fprintfHook_Return));
-    if (dlogRes == MH_OK) MH_EnableHook(fprintfHook);
-
-    // BASE #04 - sprintf - needs tramp. return
-    dlogRes = MH_CreateHook(sprintfHook, &sprintf_reimpl, reinterpret_cast<LPVOID*>(&sprintfHook_Return));
-    if (dlogRes == MH_OK) MH_EnableHook(sprintfHook);
-
-    // BASE #05 - Stub log restoration (error) Hook
-    dlogRes = MH_CreateHook(debuglogVerbHook, &debug_log_verb, reinterpret_cast<LPVOID*>(&debuglogVerbHook_Return));
-    if (dlogRes == MH_OK) MH_EnableHook(debuglogVerbHook);
-
-    // Extra #01 - Scene main loop (with scene id)
-    dlogRes = MH_CreateHook(
-        sceneMainLoopHook, // target
-        reinterpret_cast<void*>(&scene_mainloop_reimpl),
-        reinterpret_cast<void**>(&scene_mainloop)
-    );
-
-    if (dlogRes == MH_OK) MH_EnableHook(sceneMainLoopHook);
-}
-
+// ### Implementations
 void YGO2::EmptyStub() {
     return;
 }
@@ -185,6 +119,7 @@ int __fastcall  YGO2::debug_log_verb(void* _this, int a, const char* b, unsigned
     return debuglogVerbHook_Return(_this, a, b, c);
 }
 
+int(__thiscall* scene_mainloop)(void*, int);
 int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber) {
     // here we are calling the trampoline & executing the code
     // of the target function, while also being able to run our own code afterwards/before
@@ -215,4 +150,116 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
     }
 
     return scene_mainloop(_this, sceneNumber);
+}
+
+int(__cdecl* duel_start)(int);
+int __cdecl YGO2::duel_start_reimpl(int mode) {
+    int* duelModeDword = (int*)0x012A9084;
+    int* duelTimerDword = (int*)0x012A9080;
+
+    // modes: 0 (single duel), 1 (match duel) 2,5,9,12
+    // mode = 4;
+    return duel_start(mode);
+}
+
+// ### CONSTRUCTOR
+YGO2::YGO2(int ver) {
+    ygoVer = ver;
+
+    // Debug console
+    AllocConsole();
+    SetConsoleOutputCP(932);
+    SetConsoleCP(932);
+    std::wcout.imbue(std::locale("ja_jp.utf-8"));
+    SetConsoleTitleA("YGO2 DEBUG CONSOLE");
+    freopen("CONOUT$", "w", stdout);
+
+    std::cout << "YGO2 (ver " << ygoVer << ") detected!" << std::endl;
+
+    // Debug menu change text
+    wchar_t* debugTextOverridePtr;
+    char* debugParam;
+    std::wstringstream debugWStrStream;
+    debugWStrStream << "@9 Yu-Gi-Oh! Online: Duel Evolution (build ver " << ygoVer << ")\
+                    \n@9 Hotkeys for additional debug output: SHIFT+W, SHIFT+E, SHIFT+X, SHIFT+C \
+                    \n@9 Press the key '1' to load a deck from memory. Clicking the duel button will only create a dummy deck. \
+                    \n@1 You need a kaban.bin to enable cards in deck builder! \
+                    \n\n@7 Created by DerPlayer and PhilYeahz";
+
+    switch (ver)
+    {
+    case YGO2_2006_10:
+        break;
+    case YGO2_2008_01:
+        debuglogHook = hooktype_debuglog(DEBUG_LOG_ADDR_200801);
+        debuglogNetworkHook = hooktype_debuglog_net(DEBUG_LOG_ADDR_NETWORK_200801);
+        printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200801);
+        fprintfHook = hooktype_fprintf(DEBUG_LOG_FPRINTF_200801);
+        sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200801);
+        debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200801);
+
+        //sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200801);
+        break;
+    case YGO2_2008_11:
+        // Force activate debug mode by nulling the param string
+        debugParam = (char*)DEBUG_PARAMFLAG_200811;
+        strncpy(debugParam, "", 5);
+
+        // Text edit 200811
+        debugTextOverridePtr = (wchar_t*)DEBUG_TEXTSTRING_200811;
+        wcsncpy(debugTextOverridePtr, debugWStrStream.str().c_str(), 420); // ~426 is max!
+
+        debuglogHook = hooktype_debuglog(DEBUG_LOG_ADDR_200811);
+        debuglogNetworkHook = hooktype_debuglog_net(DEBUG_LOG_ADDR_NETWORK_200811);
+        printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200811);
+        fprintfHook = hooktype_fprintf(DEBUG_LOG_FPRINTF_200811);
+        sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200811);
+        debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200811);
+
+        sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200811);
+        //duelHook = hooktype_duelscene(DUEL_ADDR_200811);
+        //duelStartHook = hooktype_duelstart(DUEL_START_200811); - corrupts the game too much
+        break;
+    default:
+        MessageBoxW(0, L"This YGO2 game version is not yet supported by the DLL plugin. Please submit it.", L"", 0);
+        return;
+    }
+    MH_STATUS dlogRes;
+
+    // BASE #00 - Stub log restoration Hook
+    dlogRes = MH_CreateHook(debuglogHook, &debug_log, NULL);
+    if (dlogRes == MH_OK) MH_EnableHook(debuglogHook);
+
+    // BASE #01 - Network log
+    dlogRes = MH_CreateHook(debuglogNetworkHook, &network_response_log_stub, NULL);
+    if (dlogRes == MH_OK) MH_EnableHook(debuglogNetworkHook);
+
+    // BASE #02 - printf
+    dlogRes = MH_CreateHook(printfHook, &debug_log_buffer_ret, NULL);
+    if (dlogRes == MH_OK) MH_EnableHook(printfHook);
+
+    // BASE #03 - fprintf - needs tramp. return
+    dlogRes = MH_CreateHook(fprintfHook, &fprint_reimpl, reinterpret_cast<LPVOID*>(&fprintfHook_Return));
+    if (dlogRes == MH_OK) MH_EnableHook(fprintfHook);
+
+    // BASE #04 - sprintf - needs tramp. return
+    dlogRes = MH_CreateHook(sprintfHook, &sprintf_reimpl, reinterpret_cast<LPVOID*>(&sprintfHook_Return));
+    if (dlogRes == MH_OK) MH_EnableHook(sprintfHook);
+
+    // BASE #05 - Stub log restoration (error) Hook - (disabled by default because slows the app too much)
+    //dlogRes = MH_CreateHook(debuglogVerbHook, &debug_log_verb, reinterpret_cast<LPVOID*>(&debuglogVerbHook_Return));
+    //if (dlogRes == MH_OK) MH_EnableHook(debuglogVerbHook);
+
+    // Extra #01 - Scene main loop (with scene id)
+    dlogRes = MH_CreateHook(
+        sceneMainLoopHook, // target
+        reinterpret_cast<void*>(&scene_mainloop_reimpl),
+        reinterpret_cast<void**>(&scene_mainloop)
+    );
+
+    if (dlogRes == MH_OK) MH_EnableHook(sceneMainLoopHook);
+
+    // Extra #02 - Duel start (with duel mode id)
+    dlogRes = MH_CreateHook(duelStartHook, &duel_start_reimpl, reinterpret_cast<LPVOID*>(&duelStartHook_Return));
+    if (dlogRes == MH_OK) MH_EnableHook(duelStartHook);
 }

@@ -23,6 +23,12 @@
     <ClInclude Include="YGOShared.hpp">
       <Filter>Mod</Filter>
     </ClInclude>
+    <ClInclude Include="YGO_ADDR_200602.h">
+      <Filter>Mod\YGO1</Filter>
+    </ClInclude>
+    <ClInclude Include="YGO2_ADDR_200610.h">
+      <Filter>Mod\YGO2</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />
@@ -39,6 +45,9 @@
     </Filter>
     <Filter Include="Mod\YGO2">
       <UniqueIdentifier>{60e2f294-f3c4-4d83-9199-0b55ecaee584}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mod\YGO1">
+      <UniqueIdentifier>{4ae2aa65-58d0-439b-9f8e-6f7c062eeca5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

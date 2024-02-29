@@ -1,6 +1,6 @@
 #pragma once
 
-#define YGO2_2006_10 1      // TODO: find out real ver
+#define YGO2_2006_10 0      // doesn't exist
 #define YGO2_2008_01 164
 #define YGO2_2008_11 381
 
@@ -9,8 +9,11 @@
 
 #include "YGOShared.hpp"
 #include "include/MinHook.h"
+#include <locale>
+#include <codecvt>
 
 // Address includes
+#include "YGO2_ADDR_200610.h"
 #include "YGO2_ADDR_200801.h"
 #include "YGO2_ADDR_200811.h"
 
@@ -18,7 +21,6 @@ class YGO2 {
 
 public:
     // Generic typedefs for YGO2
-    typedef void(__fastcall* hooktype_duelscene)();
     typedef void(__fastcall* hooktype_debuglog)(const char* a, ...); //made to know what are hookable
     typedef void(__fastcall* hooktype_debuglog_net)(const char* a);
     typedef void(__fastcall* hooktype_printf)(const char* a, ...);
@@ -26,13 +28,14 @@ public:
     typedef int(*hooktype_sprintf)(char* const Buffer, const char* const Format, ...);
     typedef int(__fastcall* hooktype_debuglog_verb)(void*, int, const void*, unsigned int);
 
+    typedef void(__fastcall* hooktype_duelscene)();
     typedef int(__stdcall* hooktype_scn_mainloop)(void*, void*);
     //typedef int(*hooktype_scn_janken)(char a, int i);
     //typedef int(*hooktype_scn_duel)(char a, int i);
     typedef int(__cdecl* hooktype_duelstart)(int);
 
     // The rest (tm)
-    YGO2(int ver);
+    YGO2(int ver, std::string verStr);
     void EmptyStub();
     void __fastcall EmptyStubFast();
 
@@ -52,7 +55,7 @@ public:
     static void __fastcall network_response_log_stub(const char* a);
     static char* debug_log_buffer_ret(char* msg, ...);
     static int fprint_reimpl(FILE* const Stream, const char* const Format, char* bootleg_va);
-    static int sprintf_reimpl(char* const Buffer, const char* const Format, char* bootleg_va);
+    static int sprintf_reimpl(char* const Buffer, const char* const Format, ...);
     static int __fastcall debug_log_verb(void* _this, int a, const char* b, unsigned int c);
 
     static int __fastcall scene_mainloop_reimpl(void* _this, void* x, int sceneNumber);

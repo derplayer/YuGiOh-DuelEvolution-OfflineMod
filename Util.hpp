@@ -96,8 +96,8 @@ bool Utf16ToUtf8(const std::wstring_view& utf16, std::string& utf8)
 inline bool stol(const std::string& str, long& out)
 {
 	int& errno_ref = errno;
-	const char *ptr = str.c_str();
-	char *eptr;
+	const char* ptr = str.c_str();
+	char* eptr;
 	errno_ref = 0;
 	out = strtol(ptr, &eptr, 10);
 
@@ -111,8 +111,8 @@ inline bool stol(const std::string& str, long& out)
 inline bool stoul(const std::string& str, unsigned long& out)
 {
 	int& errno_ref = errno;
-	const char *ptr = str.c_str();
-	char *eptr;
+	const char* ptr = str.c_str();
+	char* eptr;
 	errno_ref = 0;
 	out = strtoul(ptr, &eptr, 10);
 
@@ -150,7 +150,7 @@ void SetThreadDpiAware()
 	HMODULE hUser32 = GetModuleHandleW(L"user32.dll");
 	if (hUser32)
 	{
-		using SetThreadDpiAwarenessContextPtr = DPI_AWARENESS_CONTEXT(WINAPI *)(DPI_AWARENESS_CONTEXT);
+		using SetThreadDpiAwarenessContextPtr = DPI_AWARENESS_CONTEXT(WINAPI*)(DPI_AWARENESS_CONTEXT);
 		auto funcPtr = reinterpret_cast<SetThreadDpiAwarenessContextPtr>(GetProcAddress(hUser32, "SetThreadDpiAwarenessContext"));
 		if (funcPtr)
 			funcPtr(DPI_AWARENESS_CONTEXT_SYSTEM_AWARE);
@@ -198,15 +198,16 @@ char* utf8cpy(char* dst, const char* src, size_t sizeDest)
 	return dst;
 }
 
-static int getYGO2Version(const char* filepath)
+static int getYGO2Version(std::string fp)
 {
+	const char* filepath = fp.c_str();
 	DWORD dwDummyHandle, len;
 	BYTE* buf = 0;
 	unsigned int verlen;
 	LPVOID lpvi;
 	VS_FIXEDFILEINFO fileInfo;
 
-	if (!filepath || !filepath[0]) return 0;
+	if (!filepath || !filepath[0]) return -1;
 
 	len = GetFileVersionInfoSize((char*)filepath, &dwDummyHandle);
 	if (!len) return 0;
@@ -217,4 +218,82 @@ static int getYGO2Version(const char* filepath)
 	fileInfo = *(VS_FIXEDFILEINFO*)lpvi;
 	free(buf);
 	return fileInfo.dwProductVersionLS;
+}
+
+static bool fileExists(const std::string& filename) {
+	std::ifstream file(filename.c_str());
+	return file.good();
+}
+
+static std::string getEXEPath() {
+	std::vector<char> buffer(MAX_PATH);
+	DWORD size = GetModuleFileNameA(NULL, &buffer[0], buffer.size());
+
+	if (size == 0 || size == buffer.size())
+	{
+		// Handle error here...
+		return "";
+	}
+	else
+	{
+		std::string exePath(buffer.begin(), buffer.begin() + size);
+		return exePath;
+	}
+}
+
+
+static std::string FindPatternAndRead(char* base, size_t size, const char* pattern, const char* mask)
+{
+	size_t patternLength = strlen(mask);
+
+	for (size_t i = 0; i < size - patternLength; i++)
+	{
+		bool found = true;
+		for (size_t j = 0; j < patternLength; j++)
+		{
+			if (mask[j] != '?' && pattern[j] != *(base + i + j))
+			{
+				found = false;
+				break;
+			}
+		}
+
+		if (found)
+		{
+			std::string result;
+			for (size_t j = 0; *(base + i + j) != '\0'; j++)
+			{
+				result += *(base + i + j);
+			}
+			return result;
+		}
+	}
+
+	return "";
+}
+
+static std::string ScanAndReadMemoryString(HMODULE hModule, const char* pattern)
+{
+	// Get the base address of the module
+	char* base = (char*)hModule;
+
+	// Get the DOS header
+	IMAGE_DOS_HEADER* dosHeader = (IMAGE_DOS_HEADER*)hModule;
+
+	// Get the NT headers
+	IMAGE_NT_HEADERS* ntHeaders = (IMAGE_NT_HEADERS*)(base + dosHeader->e_lfanew);
+
+	// Get the size of the image
+	size_t size = ntHeaders->OptionalHeader.SizeOfImage;
+
+	// Define the mask
+	char* mask = new char[strlen(pattern) + 1];
+	std::fill_n(mask, strlen(pattern), 'x');
+	mask[strlen(pattern)] = '\0';
+
+	// Find the pattern and read until null terminator
+	std::string result = FindPatternAndRead(base, size, pattern, mask);
+
+	delete[] mask;
+	return result;
 }

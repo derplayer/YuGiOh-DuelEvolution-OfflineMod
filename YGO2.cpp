@@ -2,6 +2,7 @@
 
 #include "YGO2.h"
 static int ygoVer = 0;
+static std::string ygoVerStr = "unk";
 
 // ### Trampoline returns
 static YGO2::hooktype_fprintf fprintfHook_Return = nullptr;
@@ -23,22 +24,32 @@ void __fastcall YGO2::EmptyStubFast()
 
 void YGO2::debug_log(char* msg, ...)
 {
-    char buffer[512];
-    sprintf(buffer, "debug log: ");
-
-    va_list args;
-    va_start(args, msg);
-    vsprintf(buffer + strlen(buffer), msg, args);
-    va_end(args);
-
-    printf(buffer);
-
-    if (!strstr(buffer, "\n")) {
-        printf("\n");
+    // INFO: at duel, sometimes there is garbage in log call? (atleast in YGO2_2006_10, maybe due to diff. call conv "__cdecl")
+    if (msg == NULL || msg == (char*)0x1) {
+        printf("Invalid message in stub memory register leftover detected.\n");
+        return;
     }
 
-    log_write(YGO2_LOGFILE_NAME, buffer, false);
-    return;
+	char buffer[512];
+	sprintf(buffer, "debug log: ");
+
+	va_list args;
+	va_start(args, msg);
+    vsnprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), msg, args);
+	va_end(args);
+
+    // Check if buffer ends with a newline (logs have always newline) - filters out garbage logs
+    if (buffer[strlen(buffer) - 1] == '\n') {
+        printf(buffer);
+
+        if (!strstr(buffer, "\n")) {
+            printf("\n");
+        }
+
+        log_write(YGO2_LOGFILE_NAME, buffer, false);
+    }
+
+	return;
 }
 
 void __fastcall YGO2::network_response_log_stub(const char* a)
@@ -74,15 +85,27 @@ int YGO2::fprint_reimpl(FILE* const Stream, const char* const Format, char* boot
     return fprintfHook_Return(Stream, Format, bootleg_va);
 }
 
-int YGO2::sprintf_reimpl(char* const Buffer, const char* const Format, char* bootleg_va)
+int YGO2::sprintf_reimpl(char* const Buffer, const char* const Format, ...)
 {
-    //printf(Format);
-    char bufferA[512];
-    sprintf(bufferA, "sprintf HOOK: ");
-    sprintf(bufferA + strlen(bufferA), Format, bootleg_va);
-    log_write("ygo2_dbg.txt", bufferA, true);
+    va_list args;
+    va_start(args, Format);
 
-    return sprintfHook_Return(Buffer, Format, bootleg_va);
+    char bufferA[512];
+    snprintf(bufferA, sizeof(bufferA), "sprintf HOOK: %s", Format);
+
+    // Create a separate buffer for the formatted string
+    char formattedString[512];
+    vsnprintf(formattedString, sizeof(formattedString), Format, args);
+    strncat(bufferA, formattedString, sizeof(bufferA) - strlen(bufferA) - 1);
+
+    log_write("ygo2_dbg.txt", formattedString, true);
+
+    // Pass the pre-formatted string to sprintfHook_Return to parse it again dawg (HOLY HAX)
+    int result = sprintfHook_Return(Buffer, "%s", formattedString);
+
+    va_end(args);
+
+    return result;
 }
 
 // INFO: bootleg thiscall to fastcall, x is "thiscall" ecx register
@@ -163,8 +186,9 @@ int __cdecl YGO2::duel_start_reimpl(int mode) {
 }
 
 // ### CONSTRUCTOR
-YGO2::YGO2(int ver) {
+YGO2::YGO2(int ver, std::string verStr) {
     ygoVer = ver;
+    ygoVerStr = verStr;
 
     // Debug console
     AllocConsole();
@@ -174,29 +198,53 @@ YGO2::YGO2(int ver) {
     SetConsoleTitleA("YGO2 DEBUG CONSOLE");
     freopen("CONOUT$", "w", stdout);
 
-    std::cout << "YGO2 (ver " << ygoVer << ") detected!" << std::endl;
+    std::cout << "YGO2 (" << ygoVerStr << " - exeVer " << ygoVer << ") detected!" << std::endl;
 
     // Debug menu change text
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    std::wstring wide_ygoVerStr = converter.from_bytes(ygoVerStr); // convert to std::wstring
     wchar_t* debugTextOverridePtr;
     char* debugParam;
     std::wstringstream debugWStrStream;
-    debugWStrStream << "@9 Yu-Gi-Oh! Online: Duel Evolution (build ver " << ygoVer << ")\
-                    \n@9 Hotkeys for additional debug output: SHIFT+W, SHIFT+E, SHIFT+X, SHIFT+C \
+    debugWStrStream << "@9 Yu-Gi-Oh! Online: Duel Evolution (" << wide_ygoVerStr << " - exeVer " << ygoVer << ")\
                     \n@9 Press the key '1' to load a deck from memory. Clicking the duel button will only create a dummy deck. \
                     \n@1 You need a kaban.bin to enable cards in deck builder! \
-                    \n\n@7 Created by DerPlayer and PhilYeahz";
+                    \n\n@9 Created by DerPlayer and PhilYeahz";
+
+    // the beta have no debug hotkeys
+    if (ygoVer != 0) {
+        debugWStrStream << "\n\n@9 Hotkeys for additional debug output : SHIFT + W, SHIFT + E, SHIFT + X, SHIFT + C";
+    }
 
     switch (ver)
     {
     case YGO2_2006_10:
+        // Force activate debug mode by nulling the param string
+        debugParam = (char*)DEBUG_PARAMFLAG_200610;
+        strncpy(debugParam, "", 5);
+
+        // Text edit 200610
+        debugTextOverridePtr = (wchar_t*)DEBUG_TEXTSTRING_200610;
+        wcsncpy(debugTextOverridePtr, debugWStrStream.str().c_str(), 470); // ~474 is max!
+
+        debuglogHook = hooktype_debuglog(DEBUG_LOG_ADDR_200610);
+        debuglogNetworkHook = hooktype_debuglog_net(DEBUG_LOG_ADDR_NETWORK_200610);
+        printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200610);
+        sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200610);
+
+        //debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200610);
         break;
     case YGO2_2008_01:
+        // Force activate debug mode by nulling the param string
+        debugParam = (char*)DEBUG_PARAMFLAG_200801;
+        strncpy(debugParam, "", 5);
+
         debuglogHook = hooktype_debuglog(DEBUG_LOG_ADDR_200801);
         debuglogNetworkHook = hooktype_debuglog_net(DEBUG_LOG_ADDR_NETWORK_200801);
         printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200801);
         fprintfHook = hooktype_fprintf(DEBUG_LOG_FPRINTF_200801);
         sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200801);
-        debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200801);
+        //debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200801);
 
         //sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200801);
         break;
@@ -214,13 +262,13 @@ YGO2::YGO2(int ver) {
         printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200811);
         fprintfHook = hooktype_fprintf(DEBUG_LOG_FPRINTF_200811);
         sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200811);
-        debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200811);
+        //debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200811);
 
         sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200811);
         //duelHook = hooktype_duelscene(DUEL_ADDR_200811);
         //duelStartHook = hooktype_duelstart(DUEL_START_200811); - corrupts the game too much
         break;
-    default:
+    case -1:
         MessageBoxW(0, L"This YGO2 game version is not yet supported by the DLL plugin. Please submit it.", L"", 0);
         return;
     }

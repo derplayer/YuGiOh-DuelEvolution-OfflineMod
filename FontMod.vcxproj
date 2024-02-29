@@ -111,7 +111,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(SolutionDir)$(Configuration)\Detours.lib;version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)$(Configuration)\Detours.lib;version.lib;Dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
       <ModuleDefinitionFile>dllstub.def</ModuleDefinitionFile>
     </Link>
@@ -119,8 +119,11 @@
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
     </MASM>
     <PostBuildEvent>
-      <Command> xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"
- xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200810\"</Command>
+      <Command>xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200408\" 
+xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200602\" 
+xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"
+xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200801\"
+xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200810\"</Command>
       <Message>DLL copy to debug game</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -205,9 +208,11 @@
     <ClInclude Include="Util.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="YGO2.h" />
+    <ClInclude Include="YGO2_ADDR_200610.h" />
     <ClInclude Include="YGO2_ADDR_200801.h" />
     <ClInclude Include="YGO2_ADDR_200811.h" />
     <ClInclude Include="YGOShared.hpp" />
+    <ClInclude Include="YGO_ADDR_200602.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />

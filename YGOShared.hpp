@@ -5,6 +5,8 @@
 #include <iostream>
 #include <sstream>
 #include <windows.h>
+#include <locale.h>
+#include <codecvt>
 
 static void log_write(const char* fname, const char* buffer, bool forceNewLine)
 {

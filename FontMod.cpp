@@ -7,6 +7,8 @@
 #include <string_view>
 #include <fstream>
 #include <filesystem>
+#include <DbgHelp.h>
+
 namespace fs = std::filesystem;
 
 #include "Detours/src/detours.h"
@@ -438,37 +440,42 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 	return TRUE;
 }
 
-DWORD WINAPI HookThread(LPVOID lpReserved)
-{
-	bool init_hook = false;
-	do
-	{
-		//StartHooks();
-		init_hook = true;
-	} while (!init_hook);
-	return TRUE;
-}
-
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
 	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
 	{
 		MH_Initialize();
 		DisableThreadLibraryCalls(hModule);
+		HMODULE hExe = GetModuleHandle(NULL);
 
 #if _DEBUG
 		//MessageBoxW(0, L"Yu-GI-Oh DLL plugin mod runs in debug mode!", L"", 0);
 #endif
-
 		// ### MinHook
-		CreateThread(nullptr, 0, HookThread, hModule, 0, nullptr);
-
-		// detect game version
-		int ygo2Version = getYGO2Version("yo2.exe");
-		YGO2 ygo2 = YGO2(ygo2Version);
-
-		//int ygoVersion = getYGO2Version("online_pc.exe");
-
+		// We can't be sure how the exe is named, so we scan memory to get accurate version strings
+		std::string verYGOStr = ScanAndReadMemoryString(hExe, "Ver.0");
+		std::string actualExe = getEXEPath();
+		
+		if (verYGOStr == "")
+		{
+			// PoC or YGO1 BETA
+			// TODO
+		}
+		else
+		{
+			std::string verYGOStrExtra = ScanAndReadMemoryString(hExe, "release.20");
+			if (verYGOStrExtra == "")
+			{
+				// YGO1
+			}
+			else
+			{
+				// YGO2
+				int ygo2Version = getYGO2Version(actualExe);
+				YGO2 ygo2 = YGO2(ygo2Version, verYGOStr);
+			}
+		}
+		
 		// ### FontMod
 		auto path = GetModuleFsPath(hModule);
 		LoadDLL(path.filename());

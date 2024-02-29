@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="FontMod.cpp" />
+    <ClCompile Include="YGO2.cpp">
+      <Filter>Mod</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Util.hpp" />
+    <ClInclude Include="DefConfigFile.hpp" />
+    <ClInclude Include="dllstub.hpp" />
+    <ClInclude Include="YGO2.h">
+      <Filter>Mod</Filter>
+    </ClInclude>
+    <ClInclude Include="YGO2_ADDR_200811.h">
+      <Filter>Mod\YGO2</Filter>
+    </ClInclude>
+    <ClInclude Include="YGO2_ADDR_200801.h">
+      <Filter>Mod\YGO2</Filter>
+    </ClInclude>
+    <ClInclude Include="YGOShared.hpp">
+      <Filter>Mod</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="dllstub.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="dllstub.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Mod">
+      <UniqueIdentifier>{f477571f-58a9-4511-a7d7-6cc6f41fa222}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mod\YGO2">
+      <UniqueIdentifier>{60e2f294-f3c4-4d83-9199-0b55ecaee584}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -200,6 +200,7 @@ xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FontMod.cpp" />
+    <ClCompile Include="YGO.cpp" />
     <ClCompile Include="YGO2.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -207,6 +208,7 @@ xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual
     <ClInclude Include="dllstub.hpp" />
     <ClInclude Include="Util.hpp" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="YGO.h" />
     <ClInclude Include="YGO2.h" />
     <ClInclude Include="YGO2_ADDR_200610.h" />
     <ClInclude Include="YGO2_ADDR_200801.h" />

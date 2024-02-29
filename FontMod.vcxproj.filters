@@ -5,6 +5,9 @@
     <ClCompile Include="YGO2.cpp">
       <Filter>Mod</Filter>
     </ClCompile>
+    <ClCompile Include="YGO.cpp">
+      <Filter>Mod</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
@@ -28,6 +31,9 @@
     </ClInclude>
     <ClInclude Include="YGO2_ADDR_200610.h">
       <Filter>Mod\YGO2</Filter>
+    </ClInclude>
+    <ClInclude Include="YGO.h">
+      <Filter>Mod</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -20,6 +20,7 @@ namespace fs = std::filesystem;
 #include "DefConfigFile.hpp"
 
 #include "YGO2.h"
+#include "YGO.h"
 
 #define CONFIG_FILE L"FontMod.yaml"
 #define LOG_FILE L"FontMod.log"
@@ -467,6 +468,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			if (verYGOStrExtra == "")
 			{
 				// YGO1
+				YGO ygo = YGO(verYGOStr);
 			}
 			else
 			{

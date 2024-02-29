@@ -27,3 +27,9 @@ static void log_write(const char* fname, const char* buffer, bool forceNewLine)
 
     fclose(fd);
 }
+
+// Hash function for strings
+constexpr unsigned int strToHash(const char* str, int h = 0)
+{
+    return !str[h] ? 5381 : (strToHash(str, h + 1) * 33) ^ str[h];
+}

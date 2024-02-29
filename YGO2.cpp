@@ -23,7 +23,7 @@ YGO2::YGO2(int ver) {
             printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200801);
             fprintfHook = hooktype_fprintf(DEBUG_LOG_FPRINTF_200801);
             sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200801);
-            debuglogErrHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200801);
+            debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200801);
 
             //sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200801);
             break;
@@ -33,7 +33,7 @@ YGO2::YGO2(int ver) {
             printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200811);
             fprintfHook = hooktype_fprintf(DEBUG_LOG_FPRINTF_200811);
             sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200811);
-            debuglogErrHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200811);
+            debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200811);
 
             sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200811);
             duelHook = hooktype_duelscene(DUEL_ADDR_200811);

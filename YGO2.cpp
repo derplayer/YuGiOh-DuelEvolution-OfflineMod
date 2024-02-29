@@ -77,6 +77,7 @@ char* YGO2::debug_log_buffer_ret(char* msg, ...)
 
 int YGO2::fprint_reimpl(FILE* const Stream, const char* const Format, char* bootleg_va)
 {
+    // TODO: this is broken. so i think it should be done like sprintf_reimpl... but its never called in code (at least debug mode sooo...)
     char bufferA[512];
     sprintf(bufferA, "fprintf HOOK: ");
     sprintf(bufferA + strlen(bufferA), Format, bootleg_va);
@@ -90,15 +91,25 @@ int YGO2::sprintf_reimpl(char* const Buffer, const char* const Format, ...)
     va_list args;
     va_start(args, Format);
 
-    char bufferA[512];
+    char bufferA[256];
     snprintf(bufferA, sizeof(bufferA), "sprintf HOOK: %s", Format);
 
     // Create a separate buffer for the formatted string
-    char formattedString[512];
+    char formattedString[256];
     vsnprintf(formattedString, sizeof(formattedString), Format, args);
     strncat(bufferA, formattedString, sizeof(bufferA) - strlen(bufferA) - 1);
 
-    log_write("ygo2_dbg.txt", formattedString, true);
+    // MOD: Change debug duel playernames
+    char* modPlayer = strdup("Player");
+    char* cpu = strdup("CPU (Generic)");
+    if (strcmp(formattedString, "KONAMI_PLAYER_001") == 0) {
+        strncpy(formattedString, modPlayer, strlen(modPlayer) + 1);
+    }
+    else if (strcmp(formattedString, "KONAMI_PLAYER_002") == 0) {
+        strncpy(formattedString, cpu, strlen(cpu) + 1);
+    }
+
+    log_write(YGO2_LOGFILE_NAME, formattedString, true);
 
     // Pass the pre-formatted string to sprintfHook_Return to parse it again dawg (HOLY HAX)
     int result = sprintfHook_Return(Buffer, "%s", formattedString);
@@ -149,7 +160,7 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 
     char scnStr[32];
     sprintf(scnStr, "Loading scene id: %d", sceneNumber);
-    log_write("ygo2_dbg.txt", scnStr, true);
+    log_write(YGO2_LOGFILE_NAME, scnStr, true);
 
     // override scene
     // important scene ids: 11,12 (deck editor)

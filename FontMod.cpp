@@ -151,253 +151,52 @@ HGDIOBJ WINAPI MyGetStockObject(int i)
 	return addrGetStockObject(i);
 }
 
-bool LoadSettings(HMODULE hModule, const fs::path& fileName, wchar_t* errMsg, GSOFontMode& fixGSOFont, LOGFONT& userGSOFont, bool& debug)
-{
-	bool ret = false;
-	std::ifstream fin(fileName);
-	if (fin)
-	{
-		//do {
-		//	YAML::Node config;
-		//	try
-		//	{
-		//		config = YAML::Load(fin);
-		//	}
-		//	catch (const std::exception& e)
-		//	{
-		//		swprintf(errMsg, 512, L"YAML::Load error.\n%hs", e.what());
-		//		break;
-		//	}
+void SetupYGOFontRendering() {
+	font fontInfo;
+	std::wstring originalFont = L"Arial";
+	std::wstring replacementFont = L"Yu Gothic UI Bold"; //Yu Gothic UI, MS UI Gothic, Microsoft JhengHei UI, Microsoft YaHei UI
 
-		//	if (!config.IsMap())
-		//	{
-		//		swprintf(errMsg, 512, L"Root node is not a map.");
-		//		break;
-		//	}
+	fontInfo.replace = replacementFont;
 
-		//	if (auto node = FindNode(config, "fonts"); node && node.IsMap())
-		//	{
-		//		for (const auto& i : node)
-		//		{
-		//			if (i.first.IsScalar() && i.second.IsMap())
-		//			{
-		//				YAML::Node replace;
-		//				if (auto r = FindNode(i.second, "replace"); r && r.IsScalar())
-		//				{
-		//					replace = r;
-		//				}
-		//				else
-		//				{
-		//					replace = FindNode(i.second, "name");
-		//				}
-		//				if (replace && replace.IsScalar())
-		//				{
-		//					font fontInfo;
-		//					Utf8ToUtf16(replace.as<std::string>(), fontInfo.replace);
-		//					fontInfo.overrideFlags = _NONE;
+	// Change the flags how you want
 
-		//					if (auto node = FindNode(i.second, "size"); node && node.IsScalar())
-		//					{
-		//						if (stol(node.as<std::string>(), fontInfo.height))
-		//							fontInfo.overrideFlags |= _HEIGHT;
-		//					}
+	fontInfo.overrideFlags |= _WEIGHT;
+	fontInfo.overrideFlags |= _ITALIC;
+	fontInfo.overrideFlags |= _UNDERLINE;
+	fontInfo.overrideFlags |= _STRIKEOUT;
+	fontInfo.overrideFlags |= _CHARSET;
+	fontInfo.overrideFlags |= _OUTPRECISION;
+	fontInfo.overrideFlags |= _CLIPPRECISION;
+	fontInfo.overrideFlags |= _QUALITY;
+	fontInfo.overrideFlags |= _PITCHANDFAMILY;
 
-		//					if (auto node = FindNode(i.second, "width"); node && node.IsScalar())
-		//					{
-		//						if (stol(node.as<std::string>(), fontInfo.width))
-		//							fontInfo.overrideFlags |= _WIDTH;
-		//					}
+	fontInfo.overrideFlags |= _WIDTH;
+	fontInfo.width = 8;
+	fontInfo.overrideFlags |= _HEIGHT;
+	fontInfo.height = 18;
 
-		//					if (auto node = FindNode(i.second, "weight"); node && node.IsScalar())
-		//					{
-		//						if (stol(node.as<std::string>(), fontInfo.weight))
-		//							fontInfo.overrideFlags |= _WEIGHT;
-		//					}
+	// FW_DONTCARE	0
+	// FW_THIN	100
+	// FW_EXTRALIGHT	200
+	// FW_LIGHT	300
+	// FW_NORMAL	400
+	// FW_MEDIUM	500
+	// FW_SEMIBOLD	600
+	// FW_BOLD	700
+	// FW_ULTRABOLD	800
+	// FW_HEAVY	900
+	fontInfo.weight = FW_BOLD;
+	fontInfo.italic = false;
+	fontInfo.underLine = false;
+	fontInfo.strikeOut = false;
+	fontInfo.charSet = SHIFTJIS_CHARSET;
+	fontInfo.outPrecision = OUT_TT_ONLY_PRECIS;
+	fontInfo.clipPrecision = CLIP_DEFAULT_PRECIS;
+	fontInfo.quality = CLEARTYPE_QUALITY;
+	fontInfo.pitchAndFamily = FIXED_PITCH | FF_MODERN; // VARIABLE_PITCH FIXED_PITCH
 
-		//					if (auto node = FindNode(i.second, "italic"); node && node.IsScalar())
-		//					{
-		//						fontInfo.overrideFlags |= _ITALIC;
-		//						fontInfo.italic = node.as<bool>();
-		//					}
-
-		//					if (auto node = FindNode(i.second, "underLine"); node && node.IsScalar())
-		//					{
-		//						fontInfo.overrideFlags |= _UNDERLINE;
-		//						fontInfo.underLine = node.as<bool>();
-		//					}
-
-		//					if (auto node = FindNode(i.second, "strikeOut"); node && node.IsScalar())
-		//					{
-		//						fontInfo.overrideFlags |= _STRIKEOUT;
-		//						fontInfo.strikeOut = node.as<bool>();
-		//					}
-
-		//					if (auto node = FindNode(i.second, "charSet"); node && node.IsScalar())
-		//					{
-		//						unsigned long out;
-		//						if (stoul(node.as<std::string>(), out))
-		//						{
-		//							fontInfo.overrideFlags |= _CHARSET;
-		//							fontInfo.charSet = static_cast<BYTE>(out);
-		//						}
-		//					}
-
-		//					if (auto node = FindNode(i.second, "outPrecision"); node && node.IsScalar())
-		//					{
-		//						unsigned long out;
-		//						if (stoul(node.as<std::string>(), out))
-		//						{
-		//							fontInfo.overrideFlags |= _OUTPRECISION;
-		//							fontInfo.outPrecision = static_cast<BYTE>(out);
-		//						}
-		//					}
-
-		//					if (auto node = FindNode(i.second, "clipPrecision"); node && node.IsScalar())
-		//					{
-		//						unsigned long out;
-		//						if (stoul(node.as<std::string>(), out))
-		//						{
-		//							fontInfo.overrideFlags |= _CLIPPRECISION;
-		//							fontInfo.clipPrecision = static_cast<BYTE>(out);
-		//						}
-		//					}
-
-		//					if (auto node = FindNode(i.second, "quality"); node && node.IsScalar())
-		//					{
-		//						unsigned long out;
-		//						if (stoul(node.as<std::string>(), out))
-		//						{
-		//							fontInfo.overrideFlags |= _QUALITY;
-		//							fontInfo.quality = static_cast<BYTE>(out);
-		//						}
-		//					}
-
-		//					if (auto node = FindNode(i.second, "pitchAndFamily"); node && node.IsScalar())
-		//					{
-		//						unsigned long out;
-		//						if (stoul(node.as<std::string>(), out))
-		//						{
-		//							fontInfo.overrideFlags |= _PITCHANDFAMILY;
-		//							fontInfo.pitchAndFamily = static_cast<BYTE>(out);
-		//						}
-		//					}
-
-		//					std::wstring find;
-		//					Utf8ToUtf16(i.first.as<std::string>(), find);
-		//					fontsMap[find] = fontInfo;
-		//				}
-		//			}
-		//		}
-		//	}
-
-		//	if (auto node = FindNode(config, "fixGSOFont"); node)
-		//	{
-		//		if (node.IsScalar())
-		//		{
-		//			if (node.as<bool>())
-		//				fixGSOFont = USE_NCM_FONT;
-		//		}
-		//		else if (node.IsMap())
-		//		{
-		//			YAML::Node name;
-		//			if (auto r = FindNode(node, "replace"); r && r.IsScalar())
-		//			{
-		//				name = r;
-		//			}
-		//			else
-		//			{
-		//				name = FindNode(node, "name");
-		//			}
-		//			if (name && name.IsScalar())
-		//			{
-		//				fixGSOFont = USE_USER_FONT;
-
-		//				std::wstring faceName;
-		//				Utf8ToUtf16(name.as<std::string>(), faceName);
-		//				memcpy_s(userGSOFont.lfFaceName, sizeof(userGSOFont.lfFaceName), faceName.c_str(), faceName.size() * sizeof(decltype(faceName)::value_type));
-
-		//				if (auto n = FindNode(node, "size"); n && n.IsScalar())
-		//				{
-		//					stol(n.as<std::string>(), userGSOFont.lfHeight);
-		//				}
-
-		//				if (auto n = FindNode(node, "width"); n && n.IsScalar())
-		//				{
-		//					stol(n.as<std::string>(), userGSOFont.lfWidth);
-		//				}
-
-		//				if (auto n = FindNode(node, "weight"); n && n.IsScalar())
-		//				{
-		//					stol(n.as<std::string>(), userGSOFont.lfWeight);
-		//				}
-
-		//				if (auto n = FindNode(node, "italic"); n && n.IsScalar())
-		//				{
-		//					userGSOFont.lfItalic = n.as<bool>();
-		//				}
-
-		//				if (auto n = FindNode(node, "underLine"); n && n.IsScalar())
-		//				{
-		//					userGSOFont.lfUnderline = n.as<bool>();
-		//				}
-
-		//				if (auto n = FindNode(node, "strikeOut"); n && n.IsScalar())
-		//				{
-		//					userGSOFont.lfStrikeOut = n.as<bool>();
-		//				}
-
-		//				if (auto n = FindNode(node, "charSet"); n && n.IsScalar())
-		//				{
-		//					unsigned long out;
-		//					stoul(n.as<std::string>(), out);
-		//					userGSOFont.lfCharSet = static_cast<BYTE>(out);
-		//				}
-
-		//				if (auto n = FindNode(node, "outPrecision"); n && n.IsScalar())
-		//				{
-		//					unsigned long out;
-		//					stoul(n.as<std::string>(), out);
-		//					userGSOFont.lfOutPrecision = static_cast<BYTE>(out);
-		//				}
-
-		//				if (auto n = FindNode(node, "clipPrecision"); n && n.IsScalar())
-		//				{
-		//					unsigned long out;
-		//					stoul(n.as<std::string>(), out);
-		//					userGSOFont.lfClipPrecision = static_cast<BYTE>(out);
-		//				}
-
-		//				if (auto n = FindNode(node, "quality"); n && n.IsScalar())
-		//				{
-		//					unsigned long out;
-		//					stoul(n.as<std::string>(), out);
-		//					userGSOFont.lfQuality = static_cast<BYTE>(out);
-		//				}
-
-		//				if (auto n = FindNode(node, "pitchAndFamily"); n && n.IsScalar())
-		//				{
-		//					unsigned long out;
-		//					stoul(n.as<std::string>(), out);
-		//					userGSOFont.lfPitchAndFamily = static_cast<BYTE>(out);
-		//				}
-		//			}
-		//		}
-		//	}
-
-		//	if (auto node = FindNode(config, "debug"); node && node.IsScalar())
-		//		debug = node.as<bool>();
-
-		//	ret = true;
-		//} while (0);
-	}
-	else
-	{
-#pragma warning(push)
-#pragma warning(disable: 4996) // 'strerror': This function or variable may be unsafe.
-		swprintf(errMsg, 512, L"Can not open " CONFIG_FILE ".\n%hs", strerror(errno));
-#pragma warning(pop)
-	}
-	return ret;
+	// Add the font info to the map
+	fontsMap[originalFont] = fontInfo;
 }
 
 void LoadUserFonts(const fs::path& path)
@@ -499,15 +298,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 		wchar_t errMsg[512];
 		bool debug = true;
-		//if (!LoadSettings(hModule, configPath, errMsg, fixGSOFont, userGSOFont, debug))
-		//{
-		//	wchar_t msg[512];
-		//	swprintf_s(msg, L"LoadSettings error.\n%s", errMsg);
-
-		//	SetThreadDpiAware();
-		//	MessageBoxW(0, msg, L"Error", MB_ICONERROR);
-		//	return TRUE;
-		//}
+		SetupYGOFontRendering();
 
 		if (debug)
 		{

@@ -8,7 +8,7 @@
 #define DEBUG_LOG_ADDR_NETWORK_200811		0x00410FA0	// network msg log (stub) - "get MSG()..."
 #define DEBUG_LOG_PRINTF_200811				0x0040818E	// aka va_print_stub - "illegal PartIdx"
 #define DEBUG_LOG_FPRINTF_200811			0x00B0A523  // lib impl.
-#define DEBUG_LOG_SPRINTF_200811			0x006CF9D4  // lib impl.
+#define DEBUG_LOG_SPRINTF_200811			0x00B0B654  // lib impl.
 #define DEBUG_LOG_VERB_200811				0x00409953	// verbose log(?) - but seems to do more, so dont use	
 
 // Extra

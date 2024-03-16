@@ -25,7 +25,7 @@ void __fastcall YGO2::EmptyStubFast()
 void YGO2::debug_log(char* msg, ...)
 {
     // INFO: at duel, sometimes there is garbage in log call? (atleast in YGO2_2006_10, maybe due to diff. call conv "__cdecl")
-    if (msg == NULL || msg == (char*)0x1) {
+    if (msg == NULL || msg == (char*)0x1 || msg == (char*)0x2) {
         printf("Invalid message in stub memory register leftover detected.\n");
         return;
     }
@@ -161,27 +161,15 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
     char scnStr[32];
     sprintf(scnStr, "Loading scene id: %d", sceneNumber);
     log_write(YGO2_LOGFILE_NAME, scnStr, true);
-
+    //int* duelModeDword = (int*)0x012A9084; // 200811
+    // 
     // override scene
     // important scene ids: 11,12 (deck editor)
     // 15 (debug menu)
-
-    //int* duelModeDword = (int*)0x012A9084; // 200811
     //sceneNumber = 15; // forces debug menu at start
 
     // Disable this hook after one usage
-    switch (ygoVer)
-    {
-    case YGO2_2006_10:
-        //MH_DisableHook(hooktype_scn_mainloop(SCN_MAINLOOP_200610));
-        break;
-    case YGO2_2008_01:
-        //MH_DisableHook(hooktype_scn_mainloop(SCN_MAINLOOP_200801));
-        break;
-    case YGO2_2008_11:
-        //MH_DisableHook(hooktype_scn_mainloop(SCN_MAINLOOP_200811));
-        break;
-    }
+    MH_DisableHook(sceneMainLoopHook_Return);
 
     return scene_mainloop(_this, sceneNumber);
 }

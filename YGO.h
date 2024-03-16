@@ -17,9 +17,11 @@
 class YGO {
 
 public:
-    // Generic typedefs for YGO2
+    // Generic typedefs for YGO
     typedef void(__fastcall* hooktype_debuglog)(const char* a, ...); //made to know what are hookable
     typedef int(*hooktype_sprintf)(char* const Buffer, const char* const Format, ...);
+
+    typedef int(__stdcall* hooktype_scn_mainloop)(void*, void*);
 
     // The rest (tm)
     YGO(std::string verStr);
@@ -29,7 +31,10 @@ public:
     hooktype_debuglog       debuglogHook;
     hooktype_sprintf        sprintfHook;
 
+    hooktype_scn_mainloop   sceneMainLoopHook;
+
     // detour functions
     static void debug_log(char* msg, ...);
     static int sprintf_reimpl(char* const Buffer, const char* const Format, ...);
+    static int __fastcall scene_mainloop_reimpl(void* _this, void* x, int sceneNumber);
 };

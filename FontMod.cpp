@@ -298,7 +298,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 		wchar_t errMsg[512];
 		bool debug = true;
-		SetupYGOFontRendering();
+
+		// Seems not to be needed, dxvk fixes all gfx issues
+		//SetupYGOFontRendering();
 
 		if (debug)
 		{

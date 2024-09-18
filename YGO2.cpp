@@ -12,6 +12,8 @@ static YGO2::hooktype_debuglog_verb debuglogVerbHook_Return = nullptr;
 static YGO2::hooktype_scn_mainloop sceneMainLoopHook_Return = nullptr;
 static YGO2::hooktype_duelstart duelStartHook_Return = nullptr;
 
+static int lastSceneId = -1;
+
 // ### Implementations
 void YGO2::EmptyStub() {
     return;
@@ -164,13 +166,38 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
     //int* duelModeDword = (int*)0x012A9084; // 200811
     // 
     // override scene
-    // important scene ids: 11,12 (deck editor)
+    // important scene ids: 11 (unknown scene)
+    // 12 main ingame lobby (broken, starts deck edit scene when no deck), 13 tournament mode/tournament scene
     // 15 (debug menu)
+    // 28 replay duel, 29 duel end scene, 30 replay janken
+    // 36 deck edit
     //sceneNumber = 15; // forces debug menu at start
 
-    // Disable this hook after one usage
-    MH_DisableHook(sceneMainLoopHook_Return);
+    if(sceneNumber == 12){
+        return scene_mainloop(_this, 13);
+    }
 
+    // for replay recordings
+    if (sceneNumber == 15) {
+        sceneNumber = 13;
+    }
+
+    //if (sceneNumber == 15) {
+    //    sceneNumber = 9;
+    //}
+
+    //if (lastSceneId == 9) {
+    //    sceneNumber = 13;
+    //}
+
+    //if (sceneNumber == 4) {
+    //    sceneNumber = 43;
+    //}
+
+    // Disable this hook after one usage
+    //MH_DisableHook(sceneMainLoopHook_Return);
+
+    lastSceneId = sceneNumber;
     return scene_mainloop(_this, sceneNumber);
 }
 
@@ -193,9 +220,21 @@ YGO2::YGO2(int ver, std::string verStr) {
     AllocConsole();
     SetConsoleOutputCP(932);
     SetConsoleCP(932);
-    std::wcout.imbue(std::locale("ja_jp.utf-8"));
+    std::wcout.imbue(std::locale("ja_JP.utf-8"));
     SetConsoleTitleA("YGO2 DEBUG CONSOLE");
-    freopen("CONOUT$", "w", stdout);
+
+    FILE* fp;
+    freopen_s(&fp, "CONOUT$", "w", stdout);
+
+    // Set console screen buffer size
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    COORD bufferSize = { 700, 768 };
+    SetConsoleScreenBufferSize(hConsole, bufferSize);
+
+    // Set console window size
+    HWND hwndConsole = GetConsoleWindow();
+    //MoveWindow(hwndConsole, 0, 0, 700, 768, TRUE);
+    MoveWindow(hwndConsole, 0, 0, 320, 778, TRUE);
 
     std::cout << "YGO2 (" << ygoVerStr << " - exeVer " << ygoVer << ") detected!" << std::endl;
 

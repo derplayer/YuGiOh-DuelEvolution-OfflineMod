@@ -14,3 +14,6 @@
 
 // Extra
 #define DEBUG_TEXTSTRING_200610				0x007768E8	// END: 00776C9D
+
+// Scene IDs
+#define SCN_MAINLOOP_200610					0x00596340

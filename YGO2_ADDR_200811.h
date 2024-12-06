@@ -14,6 +14,7 @@
 // Extra
 #define SCN_MAINLOOP_200811					0x0061DC30
 
+// Scene IDs
 #define SCN_JANKEN_200811					0x00408C10
 #define SCN_JANKEN_IMPL_200811				0x007C3600
 

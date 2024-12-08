@@ -175,8 +175,10 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 
 	// 2006-12 Offline mode
 	if (ygoVer == 0) {
-		//(sceneMainLoopHook_Return);
-		return scene_mainloop(_this, 40);
+		if (lastSceneId == 4) {
+			MH_DisableHook(sceneMainLoopHook_Return);
+			return scene_mainloop(_this, 35);
+		}
 	}
 	else {
 		// Newer builds (easier replay mode)
@@ -229,8 +231,8 @@ YGO2::YGO2(int ver, std::string verStr) {
 
 	// Set console window size
 	HWND hwndConsole = GetConsoleWindow();
-	//MoveWindow(hwndConsole, 0, 0, 700, 768, TRUE);
-	MoveWindow(hwndConsole, 0, 0, 320, 778, TRUE);
+	MoveWindow(hwndConsole, 0, 0, 700, 768, TRUE);
+	//MoveWindow(hwndConsole, 0, 0, 320, 778, TRUE); //Youtube OBS
 
 	std::cout << "YGO2 (" << ygoVerStr << " - exeVer " << ygoVer << ") detected!" << std::endl;
 
@@ -239,6 +241,8 @@ YGO2::YGO2(int ver, std::string verStr) {
 	std::wstring wide_ygoVerStr = converter.from_bytes(ygoVerStr); // convert to std::wstring
 	wchar_t* debugTextOverridePtr;
 	char* debugParam;
+	char* apiGate;
+	char* website;
 	std::wstringstream debugWStrStream;
 	debugWStrStream << "@9 Yu-Gi-Oh! Online: Duel Evolution (" << wide_ygoVerStr << " - exeVer " << ygoVer << ")\
                     \n@9 Press the key '1' to load a deck from memory. Clicking the duel button will only create a dummy deck. \
@@ -256,6 +260,14 @@ YGO2::YGO2(int ver, std::string verStr) {
 		// Force activate debug mode by nulling the param string
 		debugParam = (char*)DEBUG_PARAMFLAG_200610;
 		strncpy(debugParam, "", 5);
+
+		// nop the api gate
+		apiGate = (char*)API_GATE_ADDR_200610;
+		strncpy(apiGate, "127.0.0.1\0", 28);
+
+		// discord link
+		website = (char*)HTTP_WEBSITE_LINK_200610;
+		strncpy(website, "127.0.0.1\0", 28);
 
 		// Text edit 200610
 		debugTextOverridePtr = (wchar_t*)DEBUG_TEXTSTRING_200610;

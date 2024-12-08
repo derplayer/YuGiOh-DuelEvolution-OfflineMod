@@ -4,6 +4,8 @@
 
 // Basic
 #define DEBUG_PARAMFLAG_200610				0x00773C68
+#define API_GATE_ADDR_200610				0x00774498
+#define HTTP_WEBSITE_LINK_200610			0x00774448
 
 #define DEBUG_LOG_ADDR_200610				0x0050AC40	// default log, "Trunk Get" for example
 #define DEBUG_LOG_ADDR_NETWORK_200610		0x00667FD0	// network msg log (real) - "get MSG()..."

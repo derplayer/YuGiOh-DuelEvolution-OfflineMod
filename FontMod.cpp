@@ -240,13 +240,54 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 	return TRUE;
 }
 
+#include <windows.h>
+#include <tlhelp32.h>
+#include <iostream>
+
+bool IsProcessRunning(const char* processName) {
+	HANDLE hProcessSnap;
+	PROCESSENTRY32 pe32;
+	bool processFound = false;
+
+	hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (hProcessSnap == INVALID_HANDLE_VALUE) {
+		return false;
+	}
+
+	pe32.dwSize = sizeof(PROCESSENTRY32);
+	if (!Process32First(hProcessSnap, &pe32)) {
+		CloseHandle(hProcessSnap);
+		return false;
+	}
+
+	do {
+		if (strcmp(pe32.szExeFile, processName) == 0) {
+			processFound = true;
+			break;
+		}
+	} while (Process32Next(hProcessSnap, &pe32));
+
+	CloseHandle(hProcessSnap);
+	return processFound;
+}
+
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
+	static UINT_PTR timerId = 0;
+#ifdef NDEBUG
+	// Check if Yo2Launcher.exe is running
+	if (!IsProcessRunning("Yo2Launcher.exe")) {
+		MessageBoxA(NULL, "Please start the game over the Yo2Launcher.exe.", "Yu-Gi-Oh! Online: Duel Evolution", MB_OK | MB_ICONERROR);
+		ExitProcess(1);
+		return FALSE;
+	}
+#endif
 	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
 	{
 		MH_Initialize();
 		DisableThreadLibraryCalls(hModule);
 		HMODULE hExe = GetModuleHandle(NULL);
+		//timerId = SetTimer(NULL, 0, 10, TimerProc);
 
 #if _DEBUG
 		//MessageBoxW(0, L"Yu-GI-Oh DLL plugin mod runs in debug mode!", L"", 0);
@@ -375,6 +416,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	}
 	else if (ul_reason_for_call == DLL_PROCESS_DETACH)
 	{
+		KillTimer(NULL, timerId);
 		if (logFile)
 			fclose(logFile);
 	}

@@ -28,6 +28,24 @@ static void log_write(const char* fname, const char* buffer, bool forceNewLine)
     fclose(fd);
 }
 
+static int hexCharToByte(char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1;
+}
+
+static void hexStringToByteArray(const std::string& hexString, unsigned char* byteArray, size_t byteArraySize) {
+    if (hexString.length() % 2 != 0) {
+        throw std::invalid_argument("Hex string length must be even");
+    }
+
+    for (size_t i = 0; i < byteArraySize; ++i) {
+        byteArray[i] = (hexCharToByte(hexString[2 * i]) << 4) | hexCharToByte(hexString[2 * i + 1]);
+    }
+}
+
+
 // Hash function for strings
 constexpr unsigned int strToHash(const char* str, int h = 0)
 {

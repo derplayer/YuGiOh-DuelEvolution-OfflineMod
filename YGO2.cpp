@@ -1,6 +1,7 @@
 ﻿#pragma warning(disable:26495)
 
 #include "YGO2.h"
+#include <filesystem>
 static int ygoVer = 0;
 static std::string ygoVerStr = "unk";
 
@@ -160,6 +161,106 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 	// here we are calling the trampoline & executing the code
 	// of the target function, while also being able to run our own code afterwards/before
 
+	// TEST 1 (player stack deck)
+	// Get the handle to the current process
+	HANDLE hProcess = GetCurrentProcess();
+
+	// Read the pointer from the given offset
+	DWORD_PTR baseAddress;
+	if (!ReadProcessMemory(hProcess, (LPCVOID)PLAYER_DECK_PTR_200610, &baseAddress, sizeof(baseAddress), NULL)) {
+		MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
+	}
+
+	// Add the offset to the base address
+	DWORD_PTR finalAddress = baseAddress + 3;
+	DWORD_PTR secondCard = baseAddress + 5;
+
+	// Read the value at the secondCard pointer
+	WORD valueAtSecondCard;
+	if (!ReadProcessMemory(hProcess, (LPCVOID)secondCard, &valueAtSecondCard, sizeof(valueAtSecondCard), NULL)) {
+		std::cerr << "Failed to read memory" << std::endl;
+		return 1;
+	}
+
+	// Check if the value is 0x0200 (Armored Starfish)
+	if (valueAtSecondCard == 0x0000) {
+		// Prepare the data to write
+		WORD dataToWrite[5] = { 0x0100, 0x0100, 0x0100, 0x0100, 0x0100 }; //CARD_ID
+
+		// Write the data to the final address
+		if (!WriteProcessMemory(hProcess, (LPVOID)secondCard, dataToWrite, sizeof(dataToWrite), NULL)) {
+			MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
+		}
+	}
+
+	// Read the next 256 bytes from the base address
+	BYTE buffer[256];
+	if (!ReadProcessMemory(hProcess, (LPCVOID)baseAddress, buffer, sizeof(buffer), NULL)) {
+		MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
+	}
+
+	// Output the data for verification purposes
+	printf("0xPLAYER_DECK\n");
+	for (int i = 0; i < 256; ++i) {
+		printf("%02X ", buffer[i]);
+		if ((i + 1) % 16 == 0) {
+			printf("\n");
+		}
+	}
+
+	// TEST2 (kaban)
+	// PLAYER_KABAN_PTR_200610 for base
+	// PLAYER_KABAN_PTR_200610 + 4 for counter of set kaban
+	// PLAYER_KABAN_PTR_200610 + 14 for first card entry
+	// MAX: 2690 entrys (0A82)
+	// Read the pointer from the given offset
+	DWORD_PTR baseAddressKB;
+	if (!ReadProcessMemory(hProcess, (LPCVOID)PLAYER_KABAN_PTR_200610, &baseAddressKB, sizeof(baseAddressKB), NULL)) {
+		MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
+	}
+
+	DWORD_PTR addressKbCnt = baseAddressKB + 4;
+	DWORD_PTR addressKbFirst = baseAddressKB + 15;
+
+	DWORD kabanCount;
+	if (!ReadProcessMemory(hProcess, (LPCVOID)addressKbCnt, &kabanCount, sizeof(kabanCount), NULL)) {
+		std::cerr << "Failed to read memory" << std::endl;
+		return 1;
+	}
+
+	WORD firstKabanEntry;
+	if (!ReadProcessMemory(hProcess, (LPCVOID)addressKbFirst, &firstKabanEntry, sizeof(firstKabanEntry), NULL)) {
+		std::cerr << "Failed to read memory" << std::endl;
+		return 1;
+	}
+
+	// Check if the value is 0x0003
+	if (firstKabanEntry == 0x0000) { //0x0003
+		WORD kabanWrite[1] = { 0x03 }; //yo2 max is 255
+		// Write the data to the final address
+		if (!WriteProcessMemory(hProcess, (LPVOID)addressKbFirst, kabanWrite, sizeof(kabanWrite), NULL)) {
+			MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
+		}
+		if (!WriteProcessMemory(hProcess, (LPVOID)addressKbCnt, kabanWrite, sizeof(kabanWrite), NULL)) {
+			MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
+		}
+	}
+
+	// Read the next 256 bytes from the base address
+	if (!ReadProcessMemory(hProcess, (LPCVOID)baseAddressKB, buffer, sizeof(buffer), NULL)) {
+		MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
+	}
+
+	// Output the data for verification purposes
+	printf("0xKABAN\n");
+	for (int i = 0; i < 256; ++i) {
+		printf("%02X ", buffer[i]);
+		if ((i + 1) % 16 == 0) {
+			printf("\n");
+		}
+	}
+
+	// SCene impl
 	char scnStr[32];
 	sprintf(scnStr, "Loading scene id: %d", sceneNumber);
 	log_write(YGO2_LOGFILE_NAME, scnStr, true);
@@ -243,7 +344,13 @@ YGO2::YGO2(int ver, std::string verStr) {
 	char* debugParam;
 	char* apiGate;
 	char* website;
+	char* playerDummyDeck;
+
+	std::string playerDeck;
 	std::wstringstream debugWStrStream;
+	size_t byteArraySize;
+	unsigned char* byteArray;
+
 	debugWStrStream << "@9 Yu-Gi-Oh! Online: Duel Evolution (" << wide_ygoVerStr << " - exeVer " << ygoVer << ")\
                     \n@9 Press the key '1' to load a deck from memory. Clicking the duel button will only create a dummy deck. \
                     \n@1 You need a kaban.bin to enable cards in deck builder! \
@@ -253,6 +360,8 @@ YGO2::YGO2(int ver, std::string verStr) {
 	if (ygoVer != 0) {
 		debugWStrStream << "\n\n@9 Hotkeys for additional debug output : SHIFT + W, SHIFT + E, SHIFT + X, SHIFT + C";
 	}
+	SIZE_T size;
+	DWORD oldProtect;
 
 	switch (ver)
 	{
@@ -268,6 +377,92 @@ YGO2::YGO2(int ver, std::string verStr) {
 		// discord link
 		website = (char*)HTTP_WEBSITE_LINK_200610;
 		strncpy(website, "127.0.0.1\0", 28);
+		
+		playerDeck =
+			"23010000"
+			"23010000"
+			"23010000"
+			"23010000"
+			"23010000"
+			"23010000"
+			"23010000"
+			"23010000"
+			"23010000"
+			"23010000"
+			"45020000"
+			"45020000"
+			"45020000"
+			"45020000"
+			"45020000"
+			"45020000"
+			"45020000"
+			"45020000"
+			"45020000"
+			"45020000"
+			"A6020000"
+			"A6020000"
+			"A6020000"
+			"A6020000"
+			"A6020000"
+			"A6020000"
+			"A6020000"
+			"A6020000"
+			"A6020000"
+			"A6020000"
+			"52040000"
+			"52040000"
+			"52040000"
+			"52040000"
+			"52040000"
+			"52040000"
+			"52040000"
+			"52040000"
+			"52040000"
+			"52040000";
+
+		//debug098:02C50000					//stack segment?
+		//debug095:02BC72D1					  db  56h; V
+		//debug095 : 02BC72D2                 db  73h; s
+		//debug095 : 02BC72D3                 db    0
+		//debug095 : 02BC72D4                 db    1
+		//debug095 : 02BC72D5                 db    0
+		//debug095 : 02BC72D6                 db    2
+		//debug095 : 02BC72D7                 db    0
+		//debug095 : 02BC72D8                 db    3
+		//debug095 : 02BC72D9                 db    0
+
+		// Byte array to hold the converted bytes
+		byteArraySize = playerDeck.length() / 2;
+		byteArray = new unsigned char[byteArraySize];
+
+		// Convert hex string to byte array
+		hexStringToByteArray(playerDeck, byteArray, byteArraySize);
+
+		// Copy the bytes to the destination
+		playerDummyDeck = (char*)PLAYER_DECK_ADDR_200610;
+		size = byteArraySize; // Size of your byte array
+
+		// Change the protection to writable
+		if (VirtualProtect(playerDummyDeck, size, PAGE_READWRITE, &oldProtect)) {
+			// Write your data
+			memcpy(playerDummyDeck, byteArray, byteArraySize);
+
+			// Restore the original protection
+			VirtualProtect(playerDummyDeck, size, oldProtect, &oldProtect);
+		}
+		else {
+			std::cerr << "Failed to change protection." << std::endl;
+		}
+
+		// Clean up
+		delete[] byteArray;
+
+		// For demonstration purposes, print the byte array as hex
+		std::cout << "Converted bytes:" << std::endl;
+		for (size_t i = 0; i < byteArraySize; ++i) {
+			std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)byteArray[i];
+		}
+		std::cout << std::endl;
 
 		// Text edit 200610
 		debugTextOverridePtr = (wchar_t*)DEBUG_TEXTSTRING_200610;

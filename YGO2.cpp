@@ -275,11 +275,29 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 	//sceneNumber = 15; // forces debug menu at start
 
 	// 2006-12 Offline mode
+	POINT mouse = GetMousePositionInWindow();
 	if (ygoVer == 0) {
-		if (lastSceneId == 4) {
-			MH_DisableHook(sceneMainLoopHook_Return);
-			return scene_mainloop(_this, 35);
+		if (lastSceneId == -1) { sceneNumber = 2; } // Overwrite default to logo scene (needed to init UI returns)
+		if (lastSceneId == 2 && sceneNumber == 3) { sceneNumber = 33; }		// logo scene -> cardswap engine init. scene
+		if (lastSceneId == 33 && sceneNumber == 13) { sceneNumber = 3; }	// cardswap scene -> menu
+		//menu --> login (implicated)
+		//menu --> deck editor
+		if (lastSceneId == 3 && sceneNumber == 4){
+			if (mouse.x >= 320 && mouse.x <= 704 && mouse.y >= 514 && mouse.y <= 561) {
+				sceneNumber = 32;
+			}
 		}
+		
+		if (lastSceneId == 4  && sceneNumber == 5) { sceneNumber = 35; }  // login-username -> our fake "return" setup scene
+		if (lastSceneId == 35 && sceneNumber == 4) { sceneNumber = 24; }  // stack duel (TODO: we should read it out from setup scene, 24 (normal) or 26(janken))
+
+		// match end goes to scn (24->25->13) - but we go back to return screen
+		//if (lastSceneId == 24 && sceneNumber == 25) { sceneNumber = 3; } // alterative
+		if (lastSceneId == 25 && sceneNumber == 13) { sceneNumber = 3; }
+
+		// OUTSIDE OF THE STANDARD FLOW TODO:
+		//if (lastSceneId == 3 && sceneNumber == 4) { sceneNumber = 3; } // Delete records dialog (bricks main btn xD)
+		if (lastSceneId == 32 && sceneNumber == 13) { sceneNumber = 3; } // deck editor back to menu
 	}
 	else {
 		// Newer builds (easier replay mode)
@@ -293,9 +311,11 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		}
 	}
 
-	// Disable this hook after one usage
+	// Disable this hook after one usage (TODO: make it forceable via config)
 	//MH_DisableHook(sceneMainLoopHook_Return);
 
+	sprintf(scnStr, "Loading (final) scene id: %d", sceneNumber);
+	log_write(YGO2_LOGFILE_NAME, scnStr, true);
 	lastSceneId = sceneNumber;
 	return scene_mainloop(_this, sceneNumber);
 }
@@ -344,6 +364,7 @@ YGO2::YGO2(int ver, std::string verStr) {
 	char* debugParam;
 	char* apiGate;
 	char* website;
+	char* title;
 	char* playerDummyDeck;
 
 	std::string playerDeck;
@@ -360,8 +381,12 @@ YGO2::YGO2(int ver, std::string verStr) {
 	if (ygoVer != 0) {
 		debugWStrStream << "\n\n@9 Hotkeys for additional debug output : SHIFT + W, SHIFT + E, SHIFT + X, SHIFT + C";
 	}
+
 	SIZE_T size;
 	DWORD oldProtect;
+	DWORD offsets[2];
+	DWORD offsetsTXT[2];
+	char* txtPtr = "\nThis is an alpha version of the Duel Evolution\noffline mod. Bugs are expected. Do not share this build!\nFor more infos: discord.gg/GAKKaJYwF7";
 
 	switch (ver)
 	{
@@ -378,6 +403,24 @@ YGO2::YGO2(int ver, std::string verStr) {
 		website = (char*)HTTP_WEBSITE_LINK_200610;
 		strncpy(website, "127.0.0.1\0", 28);
 		
+		// title
+		title = (char*)0x00773EC8;
+		strncpy(title, "Yu-Gi-Oh OFFLINE 2\0", 18);
+
+		// SwapEngine scene string override to make it into a splash info screen
+		//PrintMemory(SCN_CARDSWAP_BTN_RETURN_PTR_200610, "STR_RESIZE_PRE\n");
+		offsets[0] = SCN_CARDSWAP_BTN_RETURN_PTR_200610 + 1;
+		offsets[1] = SCN_CARDSWAP_BTN_RETURN_PTR_200610 + 16;
+		ApplyTextToNewOffset("@1Click here to start.", offsets, sizeof(offsets) / sizeof(offsets[0]));
+		offsets[0] = 0x00509361 + 1;
+		offsets[1] = 0x00509361 + 16;
+		// make the second button invisible
+		ApplyTextToNewOffset("", offsets, sizeof(offsets) / sizeof(offsets[0]));
+		offsets[0] = 0x005092BA + 1;
+		offsets[1] = 0x005092BA + 16;
+		ApplyTextToNewOffset(txtPtr, offsets, sizeof(offsets) / sizeof(offsets[0]));
+		//PrintMemory(SCN_CARDSWAP_BTN_RETURN_PTR_200610, "STR_RESIZE_POST\n");
+
 		playerDeck =
 			"23010000"
 			"23010000"

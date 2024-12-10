@@ -12,6 +12,7 @@ static YGO2::hooktype_debuglog_verb debuglogVerbHook_Return = nullptr;
 
 static YGO2::hooktype_scn_mainloop sceneMainLoopHook_Return = nullptr;
 static YGO2::hooktype_duelstart duelStartHook_Return = nullptr;
+static YGO2::hooktype_dueldeck duelDeckHook_Return = nullptr;
 
 static int lastSceneId = -1;
 
@@ -171,8 +172,22 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
 	}
 
+	//DWORD_PTR unknownPtr;
+	//if (!ReadProcessMemory(hProcess, (LPCVOID)baseAddress, &unknownPtr, sizeof(unknownPtr), NULL)) {
+	//	std::cerr << "Failed to read memory" << std::endl;
+	//	return 1;
+	//}
+
+	//// Read the value at unknown POINTER
+	//WORD unkValue;
+	//if (!ReadProcessMemory(hProcess, (LPCVOID)unknownPtr, &unkValue, sizeof(unkValue), NULL)) {
+	//	std::cerr << "Failed to read memory" << std::endl;
+	//	return 1;
+	//}
+
 	// Add the offset to the base address
 	DWORD_PTR finalAddress = baseAddress + 3;
+	DWORD_PTR finalAddress1 = baseAddress + 4;
 	DWORD_PTR secondCard = baseAddress + 5;
 
 	// Read the value at the secondCard pointer
@@ -234,17 +249,24 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		return 1;
 	}
 
+	// TEST (unknown deck ptr?)
+	//WORD dataToWriteTEST[2] = { 0x56AC, 0x7300 }; //CARD_ID
+	//if (!WriteProcessMemory(hProcess, (LPVOID)baseAddress, dataToWriteTEST, sizeof(dataToWriteTEST), NULL)) {
+	//		MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
+	//}
+	//PrintMemory(baseAddress, "TESTMEM\n");
+
 	// Check if the value is 0x0003
-	if (firstKabanEntry == 0x0000) { //0x0003
-		WORD kabanWrite[1] = { 0x03 }; //yo2 max is 255
-		// Write the data to the final address
-		if (!WriteProcessMemory(hProcess, (LPVOID)addressKbFirst, kabanWrite, sizeof(kabanWrite), NULL)) {
-			MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
-		}
-		if (!WriteProcessMemory(hProcess, (LPVOID)addressKbCnt, kabanWrite, sizeof(kabanWrite), NULL)) {
-			MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
-		}
-	}
+	//if (firstKabanEntry == 0x0000) { //0x0003
+	//	WORD kabanWrite[1] = { 0x03 }; //yo2 max is 255
+	//	// Write the data to the final address
+	//	if (!WriteProcessMemory(hProcess, (LPVOID)addressKbFirst, kabanWrite, sizeof(kabanWrite), NULL)) {
+	//		MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
+	//	}
+	//	if (!WriteProcessMemory(hProcess, (LPVOID)addressKbCnt, kabanWrite, sizeof(kabanWrite), NULL)) {
+	//		MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
+	//	}
+	//}
 
 	// Read the next 256 bytes from the base address
 	if (!ReadProcessMemory(hProcess, (LPCVOID)baseAddressKB, buffer, sizeof(buffer), NULL)) {
@@ -277,9 +299,62 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 	// 2006-12 Offline mode
 	POINT mouse = GetMousePositionInWindow();
 	if (ygoVer == 0) {
+		// ONLY FOR TESTING: force debug menu
+		//MH_DisableHook(sceneMainLoopHook_Return);
+		//if (lastSceneId == -1) { sceneNumber = 13; lastSceneId = 26; }
+		//if(sceneNumber == 13) return scene_mainloop(_this, sceneNumber);
+
 		if (lastSceneId == -1) { sceneNumber = 2; } // Overwrite default to logo scene (needed to init UI returns)
-		if (lastSceneId == 2 && sceneNumber == 3) { sceneNumber = 33; }		// logo scene -> cardswap engine init. scene
-		if (lastSceneId == 33 && sceneNumber == 13) { sceneNumber = 3; }	// cardswap scene -> menu
+		if (lastSceneId == 2 && sceneNumber == 3) { // logo scene -> cardswap engine init. scene
+			sceneNumber = 33;
+		}		
+		if (lastSceneId == 33 && sceneNumber == 13) { // cardswap scene -> menu
+			sceneNumber = 3; 
+			// Load deck from file
+			LoadDeckFromFileToMemory(hProcess, (LPCVOID)finalAddress1, "deckOffline.ydc");
+			PrintMemory(finalAddress1, "0xPLAYER_DECK_NEW\n");
+			// NPC STACK TEST (THIS IS MEMORY LAYOUT
+			//						   28 00 00 00 00 00 00 00
+			//01 00 00 00 23 01 23 01  23 01 23 01 23 01 23 01
+			//23 01 23 01 23 01 23 01  45 02 45 02 45 02 45 02
+			//45 02 45 02 45 02 45 02  45 02 45 02 A6 02 A6 02
+			//A6 02 A6 02 A6 02 A6 02  A6 02 A6 02 A6 02 A6 02
+			//52 04 52 04 52 04 52 04  52 04 52 04 52 04 52 04
+			//52 04 52 04 00 00 00 00  00 00 00 00 00 00 00 00
+			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+			//00 00 28 04 00 00 00 00  00 00 00 00 00 00 00 00
+			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+
+			// Setups the NPC deck (40 cards, 0 side deck cards(?), 1 extra deck card)
+			BYTE npcDeckHeader[12] = { 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+			// Second byte array with specified hex numbers
+			BYTE npcDeckTestData[] = {
+				0x23, 0x01, 0x23, 0x01, 0x23, 0x01, 0x23, 0x01, 0x23, 0x01,
+				0x23, 0x01, 0x23, 0x01, 0x23, 0x01, 0x23, 0x01, 0x23, 0x01,
+
+				0x45, 0x02, 0x45, 0x02, 0x45, 0x02, 0x45, 0x02, 0x45, 0x02,
+				0x45, 0x02, 0x45, 0x02, 0x45, 0x02, 0x45, 0x02, 0x45, 0x02,
+
+				0xA6, 0x02, 0xA6, 0x02, 0xA6, 0x02, 0xA6, 0x02, 0xA6, 0x02,
+				0xA6, 0x02, 0xA6, 0x02, 0xA6, 0x02, 0xA6, 0x02, 0xA6, 0x02,
+
+				0x52, 0x04, 0x52, 0x04, 0x52, 0x04, 0x52, 0x04, 0x52, 0x04,
+				0x52, 0x04, 0x52, 0x04, 0x52, 0x04, 0x52, 0x04, 0x52, 0x04,
+			};
+			ApplyBytesDirect(NPC_DECK_PTR_200610, npcDeckHeader, sizeof(npcDeckHeader));
+			ApplyBytesDirect(NPC_DECK_PTR_200610+12, npcDeckTestData, sizeof(npcDeckTestData));
+			//ApplyBytesToNewOffset(npcDeckHeader, sizeof(npcDeckHeader), npcDeckOffset, sizeof(npcDeckOffset) / sizeof(npcDeckOffset[0]));
+			PrintMemory(NPC_DECK_PTR_200610, "NPC DECK ADDR\n");
+			//LoadDeckFromFileToMemory(hProcess, (LPCVOID)NPC_DECK_PTR_200610, "deckOffline.ydc");
+			// PrintMemory(NPC_DECK_PTR_200610, "0xNPC_DECK_NEW\n");
+		}
 		//menu --> login (implicated)
 		//menu --> deck editor
 		if (lastSceneId == 3 && sceneNumber == 4){
@@ -287,7 +362,13 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 				sceneNumber = 32;
 			}
 		}
-		
+
+		// FASTER SHORTCUT TO DUEL SETUP
+		if (lastSceneId == 3 && sceneNumber == 4) { sceneNumber = 24; } //24
+
+		// SETUP SWITCH
+
+		// NORMAL FLOW (BUT I AM TOO LAZY TO IMPLEMENT IT NOW PROPERLY WITH SETUP STUFF)
 		if (lastSceneId == 4  && sceneNumber == 5) { sceneNumber = 35; }  // login-username -> our fake "return" setup scene
 		if (lastSceneId == 35 && sceneNumber == 4) { sceneNumber = 24; }  // stack duel (TODO: we should read it out from setup scene, 24 (normal) or 26(janken))
 
@@ -296,8 +377,11 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		if (lastSceneId == 25 && sceneNumber == 13) { sceneNumber = 3; }
 
 		// OUTSIDE OF THE STANDARD FLOW TODO:
-		//if (lastSceneId == 3 && sceneNumber == 4) { sceneNumber = 3; } // Delete records dialog (bricks main btn xD)
-		if (lastSceneId == 32 && sceneNumber == 13) { sceneNumber = 3; } // deck editor back to menu
+		//if (lastSceneId == 3 && sceneNumber == 4) { sceneNumber = 3; } // Delete records dialog (bricks main btn xD - diabled via txt)
+		if (lastSceneId == 32 && sceneNumber == 13) { // deck editor back to menu + save deck in ydc
+			sceneNumber = 3;
+			WriteDeckFromMemoryToFile(hProcess, (LPCVOID)finalAddress1, "deckOffline.ydc");
+		}
 	}
 	else {
 		// Newer builds (easier replay mode)
@@ -322,13 +406,80 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 
 int(__cdecl* duel_start)(int);
 int __cdecl YGO2::duel_start_reimpl(int mode) {
-	int* duelModeDword = (int*)0x012A9084;
-	int* duelTimerDword = (int*)0x012A9080;
+	//int* duelModeDword = (int*)0x012A9084;
+	//int* duelTimerDword = (int*)0x012A9080;
 
 	// modes: 0 (single duel), 1 (match duel) 2,5,9,12
-	// mode = 4;
-	return duel_start(mode);
+	//mode = 4;
+	return duelStartHook_Return(mode); //TODO: this crashes because, who knows... so we just hardedit the jumptable
 }
+
+int(__cdecl* duel_deck_prepare)(int);
+int __cdecl YGO2::duel_deck_prepare_reimpl(int player, int x, int y) {
+	DWORD offsetDeckAddr[1];
+	offsetDeckAddr[0] = DUMMY_DECK_PTR_REAL_200610;
+	BYTE buffer[250];
+	BYTE bufferFinal[500];		
+	BYTE bufferFinalExtra[250]; 
+	HANDLE hProcess = GetCurrentProcess();
+
+	// Load deck into buffer
+	LoadDeckFromFileToMemory(hProcess, (LPCVOID)buffer, "deckOffline.ydc");
+
+	// Convert the main buffer section from 0x00 to 0xBE
+	size_t count = 0;
+	size_t bufferIndex = 0;
+	for (size_t i = 0; i < (190/2); i += 2) {
+		bufferFinal[bufferIndex++] = buffer[i];
+		bufferFinal[bufferIndex++] = buffer[i + 1];
+		bufferFinal[bufferIndex++] = 0x00; // Add padding or additional bytes as needed
+		bufferFinal[bufferIndex++] = 0x00; // Add padding or additional bytes as needed
+
+		if (buffer[i] != 0x00 || buffer[i + 1] != 0x00) {
+			count++;
+		}
+	}
+
+	// Convert the extra buffer section from 0xBF to the end
+	size_t bufferExtraIndex = 0;
+	for (size_t i = 0xBF; i < sizeof(buffer); i += 2) {
+		bufferFinalExtra[bufferExtraIndex++] = buffer[i];
+		bufferFinalExtra[bufferExtraIndex++] = buffer[i + 1];
+		bufferFinalExtra[bufferExtraIndex++] = 0x00; // Add padding or additional bytes as needed
+		bufferFinalExtra[bufferExtraIndex++] = 0x00; // Add padding or additional bytes as needed
+	}
+
+	// Update the value at DUMMY_DECK_PTR_REAL_200610
+	DWORD baseAddress;
+	ReadProcessMemory(hProcess, (LPCVOID)DUMMY_DECK_AMOUNT_200610, &baseAddress, sizeof(baseAddress), NULL);
+	count = 43;
+
+	// Change the protection of card count to writable (CRASHES?)
+	//PrintMemory(DUMMY_DECK_AMOUNT_200610, "0xCARD_COUNT_PRE\n");
+	//DWORD oldProtect;
+	//if (VirtualProtect((char*)DUMMY_DECK_AMOUNT_200610, sizeof(count), PAGE_READWRITE, &oldProtect)) {
+	//	// Write your data
+	//	memcpy((char*)DUMMY_DECK_AMOUNT_200610, &count, sizeof(count));
+
+	//	// Restore the original protection
+	//	VirtualProtect((char*)DUMMY_DECK_AMOUNT_200610, sizeof(count), oldProtect, &oldProtect);
+	//}
+	//else {
+	//	std::cerr << "Failed to change protection." << std::endl;
+	//}
+
+	//ReadProcessMemory(hProcess, (LPCVOID)DUMMY_DECK_AMOUNT_200610, &baseAddress, sizeof(baseAddress), NULL);
+	//PrintMemory(DUMMY_DECK_AMOUNT_200610, "0xCARD_COUNT_POST\n");
+
+	// Apply the new byte arrays to the specified offsets
+	ApplyBytesToNewOffset(bufferFinal, bufferIndex, offsetDeckAddr, sizeof(offsetDeckAddr) / sizeof(offsetDeckAddr[0]));
+	//ApplyBytesToNewOffset(bufferFinalExtra, bufferExtraIndex, offsetDeckAddr, sizeof(offsetDeckAddr) / sizeof(offsetDeckAddr[0]));
+
+	// 0: player, 1: NPC
+	return duelDeckHook_Return(player);
+}
+
+
 
 // ### CONSTRUCTOR
 YGO2::YGO2(int ver, std::string verStr) {
@@ -421,6 +572,7 @@ YGO2::YGO2(int ver, std::string verStr) {
 		ApplyTextToNewOffset(txtPtr, offsets, sizeof(offsets) / sizeof(offsets[0]));
 		//PrintMemory(SCN_CARDSWAP_BTN_RETURN_PTR_200610, "STR_RESIZE_POST\n");
 
+		// THIS IS OLD, REMOVE I GUESS (STACK DECK HAS ITS OWN ISSUES)
 		playerDeck =
 			"23010000"
 			"23010000"
@@ -475,37 +627,37 @@ YGO2::YGO2(int ver, std::string verStr) {
 		//debug095 : 02BC72D9                 db    0
 
 		// Byte array to hold the converted bytes
-		byteArraySize = playerDeck.length() / 2;
-		byteArray = new unsigned char[byteArraySize];
+		//byteArraySize = playerDeck.length() / 2;
+		//byteArray = new unsigned char[byteArraySize];
 
 		// Convert hex string to byte array
-		hexStringToByteArray(playerDeck, byteArray, byteArraySize);
+		//hexStringToByteArray(playerDeck, byteArray, byteArraySize);
 
 		// Copy the bytes to the destination
-		playerDummyDeck = (char*)PLAYER_DECK_ADDR_200610;
-		size = byteArraySize; // Size of your byte array
+		//playerDummyDeck = (char*)PLAYER_DECK_ADDR_200610;
+		//size = byteArraySize; // Size of your byte array
 
-		// Change the protection to writable
-		if (VirtualProtect(playerDummyDeck, size, PAGE_READWRITE, &oldProtect)) {
-			// Write your data
-			memcpy(playerDummyDeck, byteArray, byteArraySize);
+		//// Change the protection to writable
+		//if (VirtualProtect(playerDummyDeck, size, PAGE_READWRITE, &oldProtect)) {
+		//	// Write your data
+		//	memcpy(playerDummyDeck, byteArray, byteArraySize);
 
-			// Restore the original protection
-			VirtualProtect(playerDummyDeck, size, oldProtect, &oldProtect);
-		}
-		else {
-			std::cerr << "Failed to change protection." << std::endl;
-		}
+		//	// Restore the original protection
+		//	VirtualProtect(playerDummyDeck, size, oldProtect, &oldProtect);
+		//}
+		//else {
+		//	std::cerr << "Failed to change protection." << std::endl;
+		//}
 
 		// Clean up
-		delete[] byteArray;
+		//delete[] byteArray;
 
 		// For demonstration purposes, print the byte array as hex
-		std::cout << "Converted bytes:" << std::endl;
-		for (size_t i = 0; i < byteArraySize; ++i) {
-			std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)byteArray[i];
-		}
-		std::cout << std::endl;
+		//std::cout << "Converted bytes:" << std::endl;
+		//for (size_t i = 0; i < byteArraySize; ++i) {
+		//	std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)byteArray[i];
+		//}
+		//std::cout << std::endl;
 
 		// Text edit 200610
 		debugTextOverridePtr = (wchar_t*)DEBUG_TEXTSTRING_200610;
@@ -518,6 +670,8 @@ YGO2::YGO2(int ver, std::string verStr) {
 
 		//debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200610);
 		sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200610);
+		duelStartHook = hooktype_duelstart(DUEL_START_200610);
+		duelDeckHook = hooktype_dueldeck(DUEL_DECK_PREPARE_200610);
 		break;
 	case YGO2_2008_01:
 		// Force activate debug mode by nulling the param string
@@ -592,7 +746,11 @@ YGO2::YGO2(int ver, std::string verStr) {
 
 	if (dlogRes == MH_OK) MH_EnableHook(sceneMainLoopHook);
 
-	// Extra #02 - Duel start (with duel mode id)
-	dlogRes = MH_CreateHook(duelStartHook, &duel_start_reimpl, reinterpret_cast<LPVOID*>(&duelStartHook_Return));
-	if (dlogRes == MH_OK) MH_EnableHook(duelStartHook);
+	// Extra #02 - Duel deck init. (deprecated, we can't enforce this mode via code easily)
+	dlogRes = MH_CreateHook(duelDeckHook, &duel_deck_prepare_reimpl, reinterpret_cast<LPVOID*>(&duelDeckHook_Return));
+	//if (dlogRes == MH_OK) MH_EnableHook(duelDeckHook);
+
+	// Extra #03 - Duel start (with duel mode id)
+	//dlogRes = MH_CreateHook(duelStartHook, &duel_start_reimpl, reinterpret_cast<LPVOID*>(&duelStartHook_Return));
+	//if (dlogRes == MH_OK) MH_EnableHook(duelStartHook);
 }

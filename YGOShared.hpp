@@ -64,6 +64,26 @@ static void PrintMemory(DWORD_PTR baseAddress, char* printLabel)
     }
 }
 
+static void PrintMemoryVariable(DWORD_PTR baseAddress, SIZE_T byteLength, char* printLabel)
+{
+    HANDLE hProcess = GetCurrentProcess();
+    BYTE* buffer = (BYTE*)malloc(byteLength);
+
+    if (!ReadProcessMemory(hProcess, (LPCVOID)baseAddress, buffer, byteLength, NULL)) {
+        MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
+    }
+
+    // Output the data for verification purposes
+    printf(printLabel);
+    for (SIZE_T i = 0; i < byteLength; ++i) {
+        printf("%02X ", buffer[i]);
+        if ((i + 1) % 16 == 0) {
+            printf("\n");
+        }
+    }
+    free(buffer);
+}
+
 static void ApplyTextToNewOffset(const char* newString, const DWORD* offsets, size_t offsetCount) {
     // Allocate memory for the new string
     char* allocatedMemory = (char*)VirtualAlloc(NULL, strlen(newString) + 1, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
@@ -88,6 +108,34 @@ static void ApplyTextToNewOffset(const char* newString, const DWORD* offsets, si
     }
 }
 
+static void ApplyBytesDirect(DWORD dest, const BYTE* src, size_t n) {
+    memcpy((void*)dest, src, n);
+}
+
+static void ApplyBytesToNewOffset(const BYTE* newBytes, size_t byteCount, const DWORD* offsets, size_t offsetCount) {
+    // Allocate memory for the new byte array
+    BYTE* allocatedMemory = (BYTE*)VirtualAlloc(NULL, byteCount, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+    if (allocatedMemory != NULL) {
+        // Copy the new byte array to the allocated memory
+        memcpy(allocatedMemory, newBytes, byteCount);
+
+        // Iterate through the array of offsets and update each one
+        for (size_t i = 0; i < offsetCount; ++i) {
+            DWORD oldProtect;
+            VirtualProtect((LPVOID)offsets[i], sizeof(BYTE*), PAGE_EXECUTE_READWRITE, &oldProtect);
+
+            // Set the new memory address to the instruction
+            *(BYTE**)offsets[i] = allocatedMemory;
+
+            VirtualProtect((LPVOID)offsets[i], sizeof(BYTE*), oldProtect, &oldProtect);
+        }
+    }
+    else {
+        // Handle allocation error
+    }
+}
+
 static POINT GetMousePositionInWindow() {
     HWND hWnd = GetForegroundWindow(); // Get the handle of the active window
     POINT point;
@@ -102,6 +150,63 @@ static POINT GetMousePositionInWindow() {
 
     // Return an invalid point if the functions fail
     return { -1, -1 };
+}
+
+static void LoadDeckFromFileToMemory(HANDLE hProcess, LPCVOID baseAddress, const char* filePath) {
+    BYTE buffer[250]; // Buffer to store the 250 bytes
+
+    // Open the file and read the 250 bytes
+    FILE* file = fopen(filePath, "rb");
+    if (file != NULL) {
+        fread(buffer, sizeof(BYTE), sizeof(buffer), file);
+        fclose(file);
+
+        // Write the buffer to the specified memory address
+        if (!WriteProcessMemory(hProcess, (LPVOID)baseAddress, buffer, sizeof(buffer), NULL)) {
+            MessageBox(NULL, "Failed to load the player deck to memory", "Error", MB_OK | MB_ICONERROR);
+        }
+        else {
+            // Print the buffer
+            printf("Loaded from %s\n", filePath);
+            for (int i = 0; i < sizeof(buffer); ++i) {
+                printf("%02X ", buffer[i]);
+                if ((i + 1) % 16 == 0) {
+                    printf("\n");
+                }
+            }
+        }
+    }
+    else {
+        MessageBox(NULL, "Failed to open player deck file for reading", "Error", MB_OK | MB_ICONERROR);
+    }
+}
+
+static void WriteDeckFromMemoryToFile(HANDLE hProcess, LPCVOID baseAddress, const char* filePath) {
+    BYTE buffer[250]; // Buffer to store the 250 bytes
+
+    // Read 250 bytes from memory
+    if (!ReadProcessMemory(hProcess, baseAddress, buffer, sizeof(buffer), NULL)) {
+        MessageBox(NULL, "Failed to read player deck from memory", "Error", MB_OK | MB_ICONERROR);
+        return;
+    }
+
+    // Write the buffer to the specified file
+    FILE* file = fopen(filePath, "wb");
+    if (file != NULL) {
+        fwrite(buffer, sizeof(BYTE), sizeof(buffer), file);
+        fclose(file);
+
+        // Print the buffer
+        printf("Player deck written from memory to %s\n", filePath);
+        for (int i = 0; i < sizeof(buffer); ++i) {
+            printf("%02X ", buffer[i]);
+            if ((i + 1) % 16 == 0) {
+                printf("\n");
+            }
+        }
+    } else {
+        MessageBox(NULL, "Failed to open player deck file for writing", "Error", MB_OK | MB_ICONERROR);
+    }
 }
 
 // Hash function for strings

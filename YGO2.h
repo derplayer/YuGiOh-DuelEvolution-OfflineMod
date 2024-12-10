@@ -33,6 +33,8 @@ public:
     //typedef int(*hooktype_scn_janken)(char a, int i);
     //typedef int(*hooktype_scn_duel)(char a, int i);
     typedef int(__cdecl* hooktype_duelstart)(int);
+    typedef int(__cdecl* hooktype_dueldeck)(int);
+    //typedef DWORD* (__cdecl* hooktype_dueldeck)(int);
 
     // The rest (tm)
     YGO2(int ver, std::string verStr);
@@ -49,6 +51,7 @@ public:
 
     hooktype_scn_mainloop   sceneMainLoopHook;
     hooktype_duelstart      duelStartHook;
+    hooktype_dueldeck       duelDeckHook;
 
     // detour functions
     static void debug_log(char* msg, ...);
@@ -60,4 +63,5 @@ public:
 
     static int __fastcall scene_mainloop_reimpl(void* _this, void* x, int sceneNumber);
     static int __cdecl duel_start_reimpl(int mode);
+    static int __cdecl duel_deck_prepare_reimpl(int player, int, int);
 };

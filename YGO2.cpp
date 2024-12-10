@@ -168,7 +168,7 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 
 	// Read the pointer from the given offset
 	DWORD_PTR baseAddress;
-	if (!ReadProcessMemory(hProcess, (LPCVOID)PLAYER_DECK_PTR_200610, &baseAddress, sizeof(baseAddress), NULL)) {
+	if (!ReadProcessMemory(hProcess, (LPCVOID)PLAYER_DECKEDIT_PTR_200610, &baseAddress, sizeof(baseAddress), NULL)) {
 		MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
 	}
 
@@ -349,7 +349,13 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 				0x52, 0x04, 0x52, 0x04, 0x52, 0x04, 0x52, 0x04, 0x52, 0x04,
 			};
 			ApplyBytesDirect(NPC_DECK_PTR_200610, npcDeckHeader, sizeof(npcDeckHeader));
-			ApplyBytesDirect(NPC_DECK_PTR_200610+12, npcDeckTestData, sizeof(npcDeckTestData));
+			ApplyBytesDirect(NPC_DECK_PTR_200610+ sizeof(npcDeckHeader), npcDeckTestData, sizeof(npcDeckTestData));
+
+			// unk offset test
+			ApplyBytesDirect(PLAYER_DECK_PTR_200610, npcDeckHeader, sizeof(npcDeckHeader));
+			ApplyBytesDirect(PLAYER_DECK_PTR_200610 + sizeof(npcDeckHeader), npcDeckTestData, sizeof(npcDeckTestData));
+			
+
 			//ApplyBytesToNewOffset(npcDeckHeader, sizeof(npcDeckHeader), npcDeckOffset, sizeof(npcDeckOffset) / sizeof(npcDeckOffset[0]));
 			PrintMemory(NPC_DECK_PTR_200610, "NPC DECK ADDR\n");
 			//LoadDeckFromFileToMemory(hProcess, (LPCVOID)NPC_DECK_PTR_200610, "deckOffline.ydc");

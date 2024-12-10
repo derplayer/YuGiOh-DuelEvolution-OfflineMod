@@ -20,11 +20,13 @@
 #define DUEL_START_200610					0x00675720
 
 // Deck & Kaban
-#define PLAYER_DECK_ADDR_200610				0x007432A0
-#define PLAYER_DECK_PTR_200610				0x00BDDE94 // Pointer! the struct after this has some unknown metadata? (2bytes) just skip for now
-#define NPC_DECK_PTR_200610					0x00BED9A8
 #define PLAYER_KABAN_PTR_200610				0x00BDC960
-// Dummy Deck (MODE1)
+#define PLAYER_DECKEDIT_PTR_200610			0x00BDDE94 // Pointer! the struct after this has some unknown metadata? (2bytes) just skip for now
+#define PLAYER_DECKEDIT_ADDR_200610			0x007432A0 // THE DECK EDITOR HAS A SEPARATE ONE BUT SYNCS AT EXIT
+#define PLAYER_DECK_PTR_200610				0x00BED8A0
+#define NPC_DECK_PTR_200610					0x00BED9A8
+
+// Dummy Deck (MODE1, deprecated)
 #define DUMMY_DECK_AMOUNT_200610			0x0074329C // default is 40 (int)
 #define DUMMY_DECK_PTR_200610				0x007432A0 // cards are in 4 byte format here, ends with 0x0100(?)
 #define DUMMY_DECK_PTR_REAL_200610			0x0064E379 // 4 byte DWORD (used by duel_deck_prepare)

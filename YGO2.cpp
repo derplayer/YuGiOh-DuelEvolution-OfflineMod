@@ -162,6 +162,7 @@ int __fastcall  YGO2::debug_log_verb(void* _this, int a, const char* b, unsigned
 
 void applyPlayerDeckToMemory()
 {
+	// Setups the deck (x cards, x side deck cards, x extra deck card) - 4 bytes per param
 	BYTE playerDeckHeader[12] = { 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	playerDeckHeader[0] = deckData.mainCardsCount;
 	playerDeckHeader[4] = deckData.sideCardsCount;
@@ -176,6 +177,7 @@ void applyPlayerDeckToMemory()
 
 void applyNPCDeckToMemory()
 {
+	// Setups the deck (x cards, x side deck cards, x extra deck card) - 4 bytes per param
 	BYTE npcDeckHeader[12] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	npcDeckHeader[0] = deckDataNPC.mainCardsCount;
 	npcDeckHeader[4] = deckDataNPC.sideCardsCount;
@@ -334,7 +336,6 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		// ONLY FOR TESTING: force debug menu
 		//MH_DisableHook(sceneMainLoopHook_Return);
 		//if (lastSceneId == -1) { sceneNumber = 13; lastSceneId = 26; }
-		//if(sceneNumber == 13) return scene_mainloop(_this, sceneNumber);
 
 		if (lastSceneId == -1) { sceneNumber = 2; } // Overwrite default to logo scene (needed to init UI returns)
 		if (lastSceneId == 2 && sceneNumber == 3) { // logo scene -> cardswap engine init. scene
@@ -342,64 +343,17 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		}		
 		if (lastSceneId == 33 && sceneNumber == 13) { // cardswap scene -> menu
 			sceneNumber = 3;
-			// Load deck from file
+			// Load player deck from file & Apply for Player 0 (Human)
 			PrintMemoryVariable(deckEditAddress_Card, 253, "\n0xDECK_EDITOR_PRE\n");
-			LoadDeckFromFileToMemory(hProcess, (LPCVOID)deckEditAddress_Card, "deckOffline.ydc", &deckData);
+			LoadDeckFromFileToMemory(hProcess, (LPCVOID)deckEditAddress_Card, "deckOffline.ydc", &deckData); // this also adds it to the deck editor
 			PrintMemoryVariable(deckEditAddress_Card, 253, "\n0xDECK_EDITOR_POST\n");
-
-			// NPC STACK TEST (THIS IS MEMORY LAYOUT RIP TO CHECK STUFF)
-			//						   28 00 00 00 00 00 00 00
-			//01 00 00 00 23 01 23 01  23 01 23 01 23 01 23 01
-			//23 01 23 01 23 01 23 01  45 02 45 02 45 02 45 02
-			//45 02 45 02 45 02 45 02  45 02 45 02 A6 02 A6 02
-			//A6 02 A6 02 A6 02 A6 02  A6 02 A6 02 A6 02 A6 02
-			//52 04 52 04 52 04 52 04  52 04 52 04 52 04 52 04
-			//52 04 52 04 00 00 00 00  00 00 00 00 00 00 00 00
-			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-			//00 00 28 04 00 00 00 00  00 00 00 00 00 00 00 00
-			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-
-
-			// Apply for Player 0 (Human)
 			applyPlayerDeckToMemory();
 
-			// Load & apply deck for Player 1 (NPC)
-			LoadDeckFromFileToMemory(hProcess, NULL, "deckOfflineCPU.ydc", &deckDataNPC, true);
+			// Load npc deck from file & Apply for Player 1 (NPC)
+			LoadDeckFromFileToMemory(hProcess, NULL, "deckOfflineCPU.ydc", &deckDataNPC, true); // this DOES NOT add to the deck editor (bool)
 			applyNPCDeckToMemory();
-			
-			// Setups the deck (40 cards, 0 side deck cards(?,unused), 1(or 0) extra deckXX card)
-			//BYTE npcDeckHeaderTest[12] = { 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-			//BYTE npcDeckTestData[] = {
-			//	0x23, 0x01, 0x23, 0x01, 0x23, 0x01, 0x23, 0x01, 0x23, 0x01,
-			//	0x23, 0x01, 0x23, 0x01, 0x23, 0x01, 0x23, 0x01, 0x23, 0x01,
-
-			//	0x45, 0x02, 0x45, 0x02, 0x45, 0x02, 0x45, 0x02, 0x45, 0x02,
-			//	0x45, 0x02, 0x45, 0x02, 0x45, 0x02, 0x45, 0x02, 0x45, 0x02,
-
-			//	0xA6, 0x02, 0xA6, 0x02, 0xA6, 0x02, 0xA6, 0x02, 0xA6, 0x02,
-			//	0xA6, 0x02, 0xA6, 0x02, 0xA6, 0x02, 0xA6, 0x02, 0xA6, 0x02,
-
-			//	0x52, 0x04, 0x52, 0x04, 0x52, 0x04, 0x52, 0x04, 0x52, 0x04,
-			//	0x52, 0x04, 0x52, 0x04, 0x52, 0x04, 0x52, 0x04, 0x52, 0x04,
-			//};
-
-			// Apply for Player 0 (Human) - Prototype
-			//ApplyBytesDirect(PLAYER_DECK_PTR_200610, npcDeckHeader, sizeof(npcDeckHeader));
-			//ApplyBytesDirect(PLAYER_DECK_PTR_200610 + sizeof(npcDeckHeader), npcDeckTestData, sizeof(npcDeckTestData));
-
-			// Apply for Player 1 (NPC) - Prototype
-			//ApplyBytesDirect(NPC_DECK_PTR_200610, npcDeckHeaderTest, sizeof(npcDeckHeaderTest));
-			//ApplyBytesDirect(NPC_DECK_PTR_200610 + sizeof(npcDeckHeaderTest), npcDeckTestData, sizeof(npcDeckTestData));
-			//PrintMemory(PLAYER_DECK_PTR_200610, "0xPLAYER_DECK_ADDR_POST\n");
-			//PrintMemory(NPC_DECK_PTR_200610,	"0xNPC_DECK_ADDR_POST\n");
 		}
+
 		//menu --> login (implicated)
 		//menu --> deck editor
 		if (lastSceneId == 3 && sceneNumber == 4){
@@ -408,7 +362,7 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 			}
 		}
 
-		// FASTER SHORTCUT TO DUEL SETUP
+		// FASTER SHORTCUT TO DUEL SETUP (menu --> play)
 		if (lastSceneId == 3 && sceneNumber == 4) { //24 normal duel, 26 janken
 
 			// Shuffle and reapply player deck to memory
@@ -419,7 +373,6 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 			ShuffleDeckBuffer(&deckDataNPC);
 			applyNPCDeckToMemory();
 
-			//shuffleDeck(npc);
 			sceneNumber = 24;
 		} 
 
@@ -439,6 +392,7 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 			sceneNumber = 3;
 			WriteDeckFromMemoryToFile(hProcess, (LPCVOID)deckEditAddress_Card, "deckOffline.ydc");
 		}
+		// TODO: we should also do a NPC deck edit dialog
 	}
 	else {
 		// Newer builds (easier replay mode)
@@ -452,7 +406,7 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		}
 	}
 
-	// Disable this hook after one usage (TODO: make it forceable via config)
+	// Disable this hook after one usage - only for testing
 	//MH_DisableHook(sceneMainLoopHook_Return);
 
 	sprintf(scnStr, "Loading (final) scene id: %d", sceneNumber);
@@ -684,7 +638,7 @@ YGO2::YGO2(int ver, std::string verStr) {
 		//sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200801);
 		break;
 	case YGO2_2008_11:
-		// Force activate debug mode by nulling the param string
+		// Force activate debug scene mode by nulling the param string
 		debugParam = (char*)DEBUG_PARAMFLAG_200811;
 		strncpy(debugParam, "", 5);
 

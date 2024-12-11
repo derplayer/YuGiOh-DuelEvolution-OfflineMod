@@ -16,6 +16,9 @@ static YGO2::hooktype_dueldeck duelDeckHook_Return = nullptr;
 
 static int lastSceneId = -1;
 
+DeckData deckData;
+DeckData deckDataNPC;
+
 // ### Implementations
 void YGO2::EmptyStub() {
 	return;
@@ -155,6 +158,35 @@ int __fastcall  YGO2::debug_log_verb(void* _this, int a, const char* b, unsigned
 	log_write(YGO2_LOGFILE_V_NAME, bufferA, true);
 
 	return debuglogVerbHook_Return(_this, a, b, c);
+}
+
+void applyPlayerDeckToMemory()
+{
+	BYTE playerDeckHeader[12] = { 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	playerDeckHeader[0] = deckData.mainCardsCount;
+	playerDeckHeader[4] = deckData.sideCardsCount;
+	playerDeckHeader[8] = deckData.extraCardsCount;
+
+	DWORD sizePlayer = sizeof(playerDeckHeader) + sizeof(deckData.buffer);
+	PrintMemoryVariable(NPC_DECK_PTR_200610, sizePlayer, "\n0xPLAYER_DECK_PRE\n");
+	ApplyBytesDirect(PLAYER_DECK_PTR_200610, playerDeckHeader, sizeof(playerDeckHeader));
+	ApplyBytesDirect(PLAYER_DECK_PTR_200610 + sizeof(playerDeckHeader), deckData.buffer, sizeof(deckData.buffer));
+	PrintMemoryVariable(NPC_DECK_PTR_200610, sizePlayer, "\n0xPLAYER_DECK_POST\n");
+}
+
+void applyNPCDeckToMemory()
+{
+	BYTE npcDeckHeader[12] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+	npcDeckHeader[0] = deckDataNPC.mainCardsCount;
+	npcDeckHeader[4] = deckDataNPC.sideCardsCount;
+	npcDeckHeader[8] = deckDataNPC.extraCardsCount;
+
+	DWORD size = sizeof(npcDeckHeader) + sizeof(deckDataNPC.buffer);
+	PrintMemoryVariable(NPC_DECK_PTR_200610, size, "\n0xPLAYER_NPC_EDITOR_PRE\n");
+	ApplyBytesDirect(NPC_DECK_PTR_200610, npcDeckHeader, sizeof(npcDeckHeader));
+	ApplyBytesDirect(NPC_DECK_PTR_200610 + sizeof(npcDeckHeader), deckDataNPC.buffer, sizeof(deckDataNPC.buffer));
+	PrintMemoryVariable(NPC_DECK_PTR_200610, size, "\n0xPLAYER_NPC_EDITOR_POST\n");
+	return;
 }
 
 int(__thiscall* scene_mainloop)(void*, int);
@@ -312,7 +344,6 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 			sceneNumber = 3;
 			// Load deck from file
 			PrintMemoryVariable(deckEditAddress_Card, 253, "\n0xDECK_EDITOR_PRE\n");
-			DeckData deckData;
 			LoadDeckFromFileToMemory(hProcess, (LPCVOID)deckEditAddress_Card, "deckOffline.ydc", &deckData);
 			PrintMemoryVariable(deckEditAddress_Card, 253, "\n0xDECK_EDITOR_POST\n");
 
@@ -335,32 +366,14 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
 			//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
 
-			// TODO: there is no real shuffle so we should move this function and do it ourself
+
 			// Apply for Player 0 (Human)
-			BYTE playerDeckHeader[12] = { 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-			DWORD sizePlayer = sizeof(playerDeckHeader) + sizeof(deckData.buffer);
-			playerDeckHeader[0] = deckData.mainCardsCount;
-			playerDeckHeader[4] = deckData.sideCardsCount;
-			playerDeckHeader[8] = deckData.extraCardsCount;
-			PrintMemoryVariable(NPC_DECK_PTR_200610, sizePlayer, "\n0xPLAYER_DECK_PRE\n");
-			ApplyBytesDirect(PLAYER_DECK_PTR_200610, playerDeckHeader, sizeof(playerDeckHeader));
-			ApplyBytesDirect(PLAYER_DECK_PTR_200610 + sizeof(playerDeckHeader), deckData.buffer, sizeof(deckData.buffer));
-			PrintMemoryVariable(NPC_DECK_PTR_200610, sizePlayer, "\n0xPLAYER_DECK_POST\n");
+			applyPlayerDeckToMemory();
 
-			// Apply for Player 1 (NPC)
-			DeckData deckDataNPC;
+			// Load & apply deck for Player 1 (NPC)
 			LoadDeckFromFileToMemory(hProcess, NULL, "deckOfflineCPU.ydc", &deckDataNPC, true);
-			BYTE npcDeckHeader[12] = { 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-			npcDeckHeader[0] = deckDataNPC.mainCardsCount;
-			npcDeckHeader[4] = deckDataNPC.sideCardsCount;
-			npcDeckHeader[8] = deckDataNPC.extraCardsCount;
+			applyNPCDeckToMemory();
 			
-			DWORD size = sizeof(npcDeckHeader) + sizeof(deckDataNPC.buffer);
-			PrintMemoryVariable(NPC_DECK_PTR_200610, size, "\n0xPLAYER_NPC_EDITOR_PRE\n");
-			ApplyBytesDirect(NPC_DECK_PTR_200610, npcDeckHeader, sizeof(npcDeckHeader));
-			ApplyBytesDirect(NPC_DECK_PTR_200610 + sizeof(npcDeckHeader), deckDataNPC.buffer, sizeof(deckDataNPC.buffer));
-			PrintMemoryVariable(NPC_DECK_PTR_200610, size, "\n0xPLAYER_NPC_EDITOR_POST\n");
-
 			// Setups the deck (40 cards, 0 side deck cards(?,unused), 1(or 0) extra deckXX card)
 			//BYTE npcDeckHeaderTest[12] = { 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 			//BYTE npcDeckTestData[] = {
@@ -396,7 +409,19 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		}
 
 		// FASTER SHORTCUT TO DUEL SETUP
-		if (lastSceneId == 3 && sceneNumber == 4) { sceneNumber = 24; } //24 normal duel, 26 janken
+		if (lastSceneId == 3 && sceneNumber == 4) { //24 normal duel, 26 janken
+
+			// Shuffle and reapply player deck to memory
+			ShuffleDeckBuffer(&deckData);
+			applyPlayerDeckToMemory();
+
+			// Shuffle and reapply npc deck to memory
+			ShuffleDeckBuffer(&deckDataNPC);
+			applyNPCDeckToMemory();
+
+			//shuffleDeck(npc);
+			sceneNumber = 24;
+		} 
 
 		// SETUP SWITCH (TODO)
 

@@ -162,6 +162,51 @@ typedef struct {
     BYTE extraCardsCount;
 } DeckData;
 
+#include <stdlib.h> // For rand() and srand()
+#include <time.h>   // For time()
+
+static void PrintMainCards(const char* message, BYTE* mainCards, int length) {
+    printf("%s\n", message);
+    for (int i = 0; i < length; i += 2) {
+        printf("%02X%02X ", mainCards[i], mainCards[i + 1]);
+        if ((i + 2) % 16 == 0) {
+            printf("\n");
+        }
+    }
+    printf("\n");
+}
+
+static void ShuffleDeckBuffer(DeckData* deckData) {
+    // Seed the random number generator with the current time
+    srand((unsigned)time(NULL));
+
+    // Shuffle function for two-byte pairs
+    auto shuffleEntries = [](BYTE* segment, int count) {
+        for (int i = count - 1; i > 0; --i) {
+            int j = rand() % (i + 1);
+            // Swap two-byte pairs
+            BYTE temp1 = segment[2 * i];
+            BYTE temp2 = segment[2 * i + 1];
+            segment[2 * i] = segment[2 * j];
+            segment[2 * i + 1] = segment[2 * j + 1];
+            segment[2 * j] = temp1;
+            segment[2 * j + 1] = temp2;
+        }
+    };
+
+    // Shuffle the segments separately
+    PrintMainCards("Main Cards before shuffling:", deckData->mainCards, sizeof(deckData->mainCards));
+    shuffleEntries(deckData->mainCards, deckData->mainCardsCount);
+    PrintMainCards("Main Cards after shuffling:", deckData->mainCards, sizeof(deckData->mainCards));
+    //shuffleEntries(deckData->sideCards, deckData->sideCardsCount);
+    //shuffleEntries(deckData->extraCards, deckData->extraCardsCount);
+
+    // Merge the shuffled segments back into the buffer
+    memcpy(deckData->buffer, deckData->mainCards, 160);
+    //memcpy(deckData->buffer + 160, deckData->sideCards, 30);
+    //memcpy(deckData->buffer + 190, deckData->extraCards, 60);
+}
+
 static void LoadDeckFromFileToMemory(HANDLE hProcess, LPCVOID baseAddress, const char* filePath, DeckData* deckData, bool skipApply = false) {
     // Open the file and read the 250 bytes
     FILE* file = fopen(filePath, "rb");

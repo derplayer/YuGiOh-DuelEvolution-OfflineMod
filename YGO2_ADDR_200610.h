@@ -2,6 +2,10 @@
 // ##### 2006-10 (also published as "061213_e" or "Ver.060419" (devs didn't change string since dev start) #####
 // INFO: This build has no jmp stubs & RTTI data is limited. (different compiler settings)
 
+// Basic (magic numbers)
+#define CARD_ID_START_200610				0
+#define CARD_ID_END_200610					2689
+
 // Basic
 #define DEBUG_PARAMFLAG_200610				0x00773C68
 #define API_GATE_ADDR_200610				0x00774498
@@ -21,8 +25,7 @@
 
 // Deck & Kaban
 #define PLAYER_KABAN_PTR_200610				0x00BDC960
-#define PLAYER_DECKEDIT_PTR_200610			0x00BDDE94 // Pointer! the struct after this has some unknown metadata? (2bytes) just skip for now
-#define PLAYER_DECKEDIT_ADDR_200610			0x007432A0 // THE DECK EDITOR HAS A SEPARATE ONE BUT SYNCS AT EXIT
+#define PLAYER_DECKEDIT_PTR_200610			0x00BDDE94 // Pointer! the struct after this has some unknown address? (4bytes) just skip for now
 #define PLAYER_DECK_PTR_200610				0x00BED8A0
 #define NPC_DECK_PTR_200610					0x00BED9A8
 

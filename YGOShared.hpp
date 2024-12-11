@@ -152,34 +152,90 @@ static POINT GetMousePositionInWindow() {
     return { -1, -1 };
 }
 
-static void LoadDeckFromFileToMemory(HANDLE hProcess, LPCVOID baseAddress, const char* filePath) {
-    BYTE buffer[250]; // Buffer to store the 250 bytes
+typedef struct {
+    BYTE buffer[250];
+    BYTE mainCards[160];
+    BYTE sideCards[30];
+    BYTE extraCards[60];
+    BYTE mainCardsCount;
+    BYTE sideCardsCount;
+    BYTE extraCardsCount;
+} DeckData;
 
+static void LoadDeckFromFileToMemory(HANDLE hProcess, LPCVOID baseAddress, const char* filePath, DeckData* deckData, bool skipApply = false) {
     // Open the file and read the 250 bytes
     FILE* file = fopen(filePath, "rb");
     if (file != NULL) {
-        fread(buffer, sizeof(BYTE), sizeof(buffer), file);
+        fread(deckData->buffer, sizeof(BYTE), sizeof(deckData->buffer), file);
         fclose(file);
 
-        // Write the buffer to the specified memory address
-        if (!WriteProcessMemory(hProcess, (LPVOID)baseAddress, buffer, sizeof(buffer), NULL)) {
-            MessageBox(NULL, "Failed to load the player deck to memory", "Error", MB_OK | MB_ICONERROR);
-        }
-        else {
-            // Print the buffer
-            printf("Loaded from %s\n", filePath);
-            for (int i = 0; i < sizeof(buffer); ++i) {
-                printf("%02X ", buffer[i]);
-                if ((i + 1) % 16 == 0) {
-                    printf("\n");
-                }
+        // Split the buffer into three separate arrays
+        memcpy(deckData->mainCards, deckData->buffer, 160);
+        memcpy(deckData->sideCards, deckData->buffer + 160, 30);
+        memcpy(deckData->extraCards, deckData->buffer + 190, 60);
+
+        // Count valid entries in each array
+        deckData->mainCardsCount = 0;
+        deckData->sideCardsCount = 0;
+        deckData->extraCardsCount = 0;
+
+        printf("Main Cards:\n");
+        for (int i = 0; i < 160; i += 2) {
+            WORD entry = (deckData->mainCards[i + 1] << 8) | deckData->mainCards[i];
+            printf("Entry %d: %04X\n", i / 2, entry);
+            if (entry >= 1 && entry <= 2689) {
+                deckData->mainCardsCount++;
             }
         }
+
+        printf("Side Cards:\n");
+        for (int i = 0; i < 30; i += 2) {
+            WORD entry = (deckData->sideCards[i + 1] << 8) | deckData->sideCards[i];
+            printf("Entry %d: %04X\n", i / 2, entry);
+            if (entry >= 1 && entry <= 2689) {
+                deckData->sideCardsCount++;
+            }
+        }
+
+        printf("Extra Cards:\n");
+        for (int i = 0; i < 60; i += 2) {
+            WORD entry = (deckData->extraCards[i + 1] << 8) | deckData->extraCards[i];
+            printf("Entry %d: %04X\n", i / 2, entry);
+            if (entry >= 1 && entry <= 2689) {
+                deckData->extraCardsCount++;
+            }
+        }
+
+		if (skipApply == false) {
+			// Write the buffer to the specified memory address
+			if (!WriteProcessMemory(hProcess, (LPVOID)baseAddress, deckData->buffer, sizeof(deckData->buffer), NULL)) {
+				MessageBox(NULL, "Failed to load the player deck to memory", "Error", MB_OK | MB_ICONERROR);
+			}
+			else {
+				// Write the counts to memory sequentially after the buffer
+				BYTE counts[3] = { deckData->mainCardsCount, deckData->sideCardsCount, deckData->extraCardsCount };
+				if (!WriteProcessMemory(hProcess, (LPVOID)((BYTE*)baseAddress + sizeof(deckData->buffer)), counts, sizeof(counts), NULL)) {
+					MessageBox(NULL, "Failed to write counts to memory", "Error", MB_OK | MB_ICONERROR);
+				}
+				else {
+					// Print the buffer and counts
+					printf("Loaded from %s\n", filePath);
+					for (int i = 0; i < sizeof(deckData->buffer); ++i) {
+						printf("%02X ", deckData->buffer[i]);
+						if ((i + 1) % 16 == 0) {
+							printf("\n");
+						}
+					}
+					printf("\nMain Cards Count: %d\nSide Cards Count: %d\nExtra Cards Count: %d\n", deckData->mainCardsCount, deckData->sideCardsCount, deckData->extraCardsCount);
+				}
+			}
+		}
     }
     else {
         MessageBox(NULL, "Failed to open player deck file for reading", "Error", MB_OK | MB_ICONERROR);
     }
 }
+
 
 static void WriteDeckFromMemoryToFile(HANDLE hProcess, LPCVOID baseAddress, const char* filePath) {
     BYTE buffer[250]; // Buffer to store the 250 bytes

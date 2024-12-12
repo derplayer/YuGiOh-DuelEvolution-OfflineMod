@@ -7,6 +7,8 @@
 #include <string_view>
 #include <fstream>
 #include <filesystem>
+#include <tlhelp32.h>
+#include <iostream>
 #include <DbgHelp.h>
 
 namespace fs = std::filesystem;
@@ -249,10 +251,6 @@ BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
 	return TRUE;
 }
 
-#include <windows.h>
-#include <tlhelp32.h>
-#include <iostream>
-
 bool IsProcessRunning(const char* processName) {
 	HANDLE hProcessSnap;
 	PROCESSENTRY32 pe32;
@@ -282,7 +280,6 @@ bool IsProcessRunning(const char* processName) {
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
-	static UINT_PTR timerId = 0;
 #ifdef NDEBUG
 	// Check if Yo2Launcher.exe is running
 	if (!IsProcessRunning("Yo2Launcher.exe")) {
@@ -296,7 +293,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		MH_Initialize();
 		DisableThreadLibraryCalls(hModule);
 		HMODULE hExe = GetModuleHandle(NULL);
-		//timerId = SetTimer(NULL, 0, 10, TimerProc);
 
 #if _DEBUG
 		//MessageBoxW(0, L"Yu-GI-Oh DLL plugin mod runs in debug mode!", L"", 0);
@@ -327,10 +323,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			}
 		}
 		
-		// ### FontMod
+		// Load winmm.dll stubs (the only DLL all yaneSDK-based games import)
 		auto path = GetModuleFsPath(hModule);
 		LoadDLL(path.filename());
 
+		/*
 		path = path.remove_filename();
 		auto configPath = path / CONFIG_FILE;
 		if (!fs::exists(configPath))
@@ -349,8 +346,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		wchar_t errMsg[512];
 		bool debug = true;
 
-		// Seems not to be needed, dxvk fixes all gfx issues
-		//SetupYGOFontRendering();
+		// Seems not to be needed, dxvk fixes all gfx issues - maybe for bigger font mode
+		// SetupYGOFontRendering();
 
 		if (debug)
 		{
@@ -406,11 +403,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		DetourTransactionBegin();
 		DetourUpdateThread(GetCurrentThread());
 
-		if (fixGSOFont != DISABLED)
-		{
-			DetourAttach(&(PVOID&)addrGetStockObject, MyGetStockObject);
-		}
-		DetourAttach(&(PVOID&)addrCreateFontIndirectExW, MyCreateFontIndirectExW);
+		//if (fixGSOFont != DISABLED)
+		//{
+		//	DetourAttach(&(PVOID&)addrGetStockObject, MyGetStockObject);
+		//}
+		//DetourAttach(&(PVOID&)addrCreateFontIndirectExW, MyCreateFontIndirectExW);
 
 		auto error = DetourTransactionCommit();
 		if (error != ERROR_SUCCESS)
@@ -422,10 +419,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			MessageBoxW(0, msg, L"Error", MB_ICONERROR);
 			return TRUE;
 		}
+		*/
 	}
 	else if (ul_reason_for_call == DLL_PROCESS_DETACH)
 	{
-		KillTimer(NULL, timerId);
 		if (logFile)
 			fclose(logFile);
 	}

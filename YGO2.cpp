@@ -2,6 +2,7 @@
 
 #include "YGO2.h"
 #include <filesystem>
+#define YGO2_MODVERSION				11
 static int ygoVer = 0;
 static std::string ygoVerStr = "unk";
 
@@ -18,6 +19,84 @@ static int lastSceneId = -1;
 
 DeckData deckData;
 DeckData deckDataNPC;
+
+// Helper function to check if an address is within the stack range
+bool IsStackAddress(void* address)
+{
+	MEMORY_BASIC_INFORMATION mbi;
+	VirtualQuery(address, &mbi, sizeof(mbi));
+	return mbi.Type == MEM_PRIVATE && mbi.AllocationProtect == PAGE_READWRITE && mbi.State == MEM_COMMIT;
+}
+
+// Function to get the description of the exception code
+const char* GetExceptionCodeDescription(DWORD code)
+{
+	switch (code)
+	{
+	case EXCEPTION_ACCESS_VIOLATION: return "EXCEPTION_ACCESS_VIOLATION";
+	case EXCEPTION_ARRAY_BOUNDS_EXCEEDED: return "EXCEPTION_ARRAY_BOUNDS_EXCEEDED";
+	case EXCEPTION_BREAKPOINT: return "EXCEPTION_BREAKPOINT";
+	case EXCEPTION_DATATYPE_MISALIGNMENT: return "EXCEPTION_DATATYPE_MISALIGNMENT";
+	case EXCEPTION_FLT_DENORMAL_OPERAND: return "EXCEPTION_FLT_DENORMAL_OPERAND";
+	case EXCEPTION_FLT_DIVIDE_BY_ZERO: return "EXCEPTION_FLT_DIVIDE_BY_ZERO";
+	case EXCEPTION_FLT_INEXACT_RESULT: return "EXCEPTION_FLT_INEXACT_RESULT";
+	case EXCEPTION_FLT_INVALID_OPERATION: return "EXCEPTION_FLT_INVALID_OPERATION";
+	case EXCEPTION_FLT_OVERFLOW: return "EXCEPTION_FLT_OVERFLOW";
+	case EXCEPTION_FLT_STACK_CHECK: return "EXCEPTION_FLT_STACK_CHECK";
+	case EXCEPTION_FLT_UNDERFLOW: return "EXCEPTION_FLT_UNDERFLOW";
+	case EXCEPTION_ILLEGAL_INSTRUCTION: return "EXCEPTION_ILLEGAL_INSTRUCTION";
+	case EXCEPTION_IN_PAGE_ERROR: return "EXCEPTION_IN_PAGE_ERROR";
+	case EXCEPTION_INT_DIVIDE_BY_ZERO: return "EXCEPTION_INT_DIVIDE_BY_ZERO";
+	case EXCEPTION_INT_OVERFLOW: return "EXCEPTION_INT_OVERFLOW";
+	case EXCEPTION_INVALID_DISPOSITION: return "EXCEPTION_INVALID_DISPOSITION";
+	case EXCEPTION_NONCONTINUABLE_EXCEPTION: return "EXCEPTION_NONCONTINUABLE_EXCEPTION";
+	case EXCEPTION_PRIV_INSTRUCTION: return "EXCEPTION_PRIV_INSTRUCTION";
+	case EXCEPTION_SINGLE_STEP: return "EXCEPTION_SINGLE_STEP";
+	case EXCEPTION_STACK_OVERFLOW: return "EXCEPTION_STACK_OVERFLOW";
+	default: return "UNKNOWN_EXCEPTION";
+	}
+}
+
+// Function that handles exceptions
+LONG CALLBACK VectoredHandler(PEXCEPTION_POINTERS ExceptionInfo)
+{
+	// Build a detailed log message
+	std::stringstream logMessage;
+	DWORD exceptionCode = ExceptionInfo->ExceptionRecord->ExceptionCode;
+	void* exceptionAddress = ExceptionInfo->ExceptionRecord->ExceptionAddress;
+
+	logMessage << "Exception code: " << std::hex << exceptionCode
+		<< " (" << GetExceptionCodeDescription(exceptionCode) << ")\n";
+	logMessage << "Exception address: " << exceptionAddress << "\n";
+	logMessage << "Number of parameters: " << ExceptionInfo->ExceptionRecord->NumberParameters << "\n";
+
+	// Determine if the exception occurred on the stack or in main memory
+	if (IsStackAddress(exceptionAddress))
+	{
+		logMessage << "Exception occurred on the stack.\n";
+	}
+	else
+	{
+		logMessage << "Exception occurred in main memory.\n";
+	}
+
+	// Log each exception information parameter
+	for (DWORD i = 0; i < ExceptionInfo->ExceptionRecord->NumberParameters; ++i)
+	{
+		logMessage << "Parameter[" << i << "]: "
+			<< ExceptionInfo->ExceptionRecord->ExceptionInformation[i] << "\n";
+	}
+
+	// Convert log message to string
+	std::string logStr = logMessage.str();
+
+	// Write to the log file
+	log_write(YGO2_LOGFILE_NAME, logStr.c_str(), false);
+
+	// For other exceptions, continue execution
+	return EXCEPTION_EXECUTE_HANDLER;
+}
+
 
 // ### Implementations
 void YGO2::EmptyStub() {
@@ -107,12 +186,12 @@ int YGO2::sprintf_reimpl(char* const Buffer, const char* const Format, ...)
 	strncat(bufferA, formattedString, sizeof(bufferA) - strlen(bufferA) - 1);
 
 	// MOD: Change debug duel playernames
-	char* modPlayer = strdup("Player");
-	char* cpu = strdup("CPU (Generic)");
 	if (strcmp(formattedString, "KONAMI_PLAYER_001") == 0) {
+		char* modPlayer = strdup("Player");
 		strncpy(formattedString, modPlayer, strlen(modPlayer) + 1);
 	}
 	else if (strcmp(formattedString, "KONAMI_PLAYER_002") == 0) {
+		char* cpu = strdup("CPU (Generic)");
 		strncpy(formattedString, cpu, strlen(cpu) + 1);
 	}
 
@@ -246,7 +325,7 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 	//30 00 30 00 30 00 88 00  88 00 88 00 8E 00 8E 00
 	//8E 00 B5 00 B5 00 B5 00  E3 00 E3 00 E3 00 04 01
 	//04 01 04 01 0B 01 0B 01  0B 01 20 01 20 01 
-	PrintMemoryVariable(deckEditAddress_Card, 253, "Deck editor in memory (full)\n");
+	PrintMemoryVariable(baseAddress, 253, "Deck editor in memory (post)\n");
 	// after this follows the amount of cards in the fixed size byte array (2A) aka 42 / side deck (0) / and extra cards (1E) aka 30
 	// array allows max of 80/15/30 *2 = 250 bytes
 	// 2A 00 1E
@@ -280,7 +359,7 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
 	}
 
-	PrintMemory(baseAddressKB, "0xKABAN\n");
+	PrintMemory(baseAddressKB, "\n0xKABAN\n");
 	DWORD_PTR addressKbCnt = baseAddressKB + 4;
 	DWORD_PTR addressKbFirst = baseAddressKB + 15;
 
@@ -358,6 +437,7 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		//menu --> deck editor
 		if (lastSceneId == 3 && sceneNumber == 4){
 			if (mouse.x >= 320 && mouse.x <= 704 && mouse.y >= 514 && mouse.y <= 561) {
+				// TODO: maybe we will need to use 31->32 here because of weird init stuff
 				sceneNumber = 32;
 			}
 		}
@@ -391,6 +471,8 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		if (lastSceneId == 32 && sceneNumber == 13) { // deck editor back to menu + save deck in ydc
 			sceneNumber = 3;
 			WriteDeckFromMemoryToFile(hProcess, (LPCVOID)deckEditAddress_Card, "deckOffline.ydc");
+			// Enforce this behaviour, because the deck editor sometimes doesn't write it back to player?
+			LoadDeckFromFileToMemory(hProcess, (LPCVOID)deckEditAddress_Card, "deckOffline.ydc", &deckData); // this also adds it to the deck editor
 		}
 		// TODO: we should also do a NPC deck edit dialog
 	}
@@ -456,7 +538,11 @@ YGO2::YGO2(int ver, std::string verStr) {
 	MoveWindow(hwndConsole, 0, 0, 700, 768, TRUE);
 	//MoveWindow(hwndConsole, 0, 0, 320, 778, TRUE); //Youtube OBS
 
+	std::cout << "Yu-Gi-Oh! Duel Evolution: Offline Mod - alpha test version 0." << YGO2_MODVERSION << ") started." << std::endl;
 	std::cout << "YGO2 (" << ygoVerStr << " - exeVer " << ygoVer << ") detected!" << std::endl;
+
+	// Add the vectored exception handler
+	AddVectoredExceptionHandler(1, VectoredHandler);
 
 	// Debug menu change text
 	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
@@ -487,7 +573,8 @@ YGO2::YGO2(int ver, std::string verStr) {
 	DWORD oldProtect;
 	DWORD offsets[2];
 	DWORD offsetsTXT[2];
-	char* txtPtr = "\nThis is an alpha version of the Duel Evolution\noffline mod. Bugs are expected. Do not share this build!\nFor more infos: discord.gg/GAKKaJYwF7";
+	char* txtPtr = "\nThis is an alpha version of the Duel Evolution\noffline mod. Bugs are expected. Do not share this build!\nFor more infos read the @3README.TXT";
+	std::string windowTitleTxt = "Yu-Gi-Oh! Duel Evolution: Offline Mod - alpha test 0." + std::to_string(YGO2_MODVERSION);
 
 	switch (ver)
 	{
@@ -497,17 +584,13 @@ YGO2::YGO2(int ver, std::string verStr) {
 		strncpy(debugParam, "", 5);
 
 		// nop the api gate
-		apiGate = (char*)API_GATE_ADDR_200610;
-		strncpy(apiGate, "127.0.0.1\0", 28);
+		//apiGate = (char*)API_GATE_ADDR_200610;
+		//strncpy(apiGate, "127.0.0.1\0", 28);
 
 		// discord link
-		website = (char*)HTTP_WEBSITE_LINK_200610;
-		strncpy(website, "127.0.0.1\0", 28);
+		//website = (char*)HTTP_WEBSITE_LINK_200610;
+		//strncpy(website, "127.0.0.1\0", 28);
 		
-		// title
-		title = (char*)0x00773EC8;
-		strncpy(title, "Yu-Gi-Oh OFFLINE 2\0", 18);
-
 		// SwapEngine scene string override to make it into a splash info screen
 		//PrintMemory(SCN_CARDSWAP_BTN_RETURN_PTR_200610, "STR_RESIZE_PRE\n");
 		offsets[0] = SCN_CARDSWAP_BTN_RETURN_PTR_200610 + 1;
@@ -522,101 +605,19 @@ YGO2::YGO2(int ver, std::string verStr) {
 		ApplyTextToNewOffset(txtPtr, offsets, sizeof(offsets) / sizeof(offsets[0]));
 		//PrintMemory(SCN_CARDSWAP_BTN_RETURN_PTR_200610, "STR_RESIZE_POST\n");
 
-		// THIS IS OLD, REMOVE I GUESS (STACK DECK HAS ITS OWN ISSUES)
-		playerDeck =
-			"23010000"
-			"23010000"
-			"23010000"
-			"23010000"
-			"23010000"
-			"23010000"
-			"23010000"
-			"23010000"
-			"23010000"
-			"23010000"
-			"45020000"
-			"45020000"
-			"45020000"
-			"45020000"
-			"45020000"
-			"45020000"
-			"45020000"
-			"45020000"
-			"45020000"
-			"45020000"
-			"A6020000"
-			"A6020000"
-			"A6020000"
-			"A6020000"
-			"A6020000"
-			"A6020000"
-			"A6020000"
-			"A6020000"
-			"A6020000"
-			"A6020000"
-			"52040000"
-			"52040000"
-			"52040000"
-			"52040000"
-			"52040000"
-			"52040000"
-			"52040000"
-			"52040000"
-			"52040000"
-			"52040000";
-
-		//debug098:02C50000					//stack segment?
-		//debug095:02BC72D1					  db  56h; V
-		//debug095 : 02BC72D2                 db  73h; s
-		//debug095 : 02BC72D3                 db    0
-		//debug095 : 02BC72D4                 db    1
-		//debug095 : 02BC72D5                 db    0
-		//debug095 : 02BC72D6                 db    2
-		//debug095 : 02BC72D7                 db    0
-		//debug095 : 02BC72D8                 db    3
-		//debug095 : 02BC72D9                 db    0
-
-		// Byte array to hold the converted bytes
-		//byteArraySize = playerDeck.length() / 2;
-		//byteArray = new unsigned char[byteArraySize];
-
-		// Convert hex string to byte array
-		//hexStringToByteArray(playerDeck, byteArray, byteArraySize);
-
-		// Copy the bytes to the destination
-		//playerDummyDeck = (char*)PLAYER_DECK_ADDR_200610;
-		//size = byteArraySize; // Size of your byte array
-
-		//// Change the protection to writable
-		//if (VirtualProtect(playerDummyDeck, size, PAGE_READWRITE, &oldProtect)) {
-		//	// Write your data
-		//	memcpy(playerDummyDeck, byteArray, byteArraySize);
-
-		//	// Restore the original protection
-		//	VirtualProtect(playerDummyDeck, size, oldProtect, &oldProtect);
-		//}
-		//else {
-		//	std::cerr << "Failed to change protection." << std::endl;
-		//}
-
-		// Clean up
-		//delete[] byteArray;
-
-		// For demonstration purposes, print the byte array as hex
-		//std::cout << "Converted bytes:" << std::endl;
-		//for (size_t i = 0; i < byteArraySize; ++i) {
-		//	std::cout << std::hex << std::setw(2) << std::setfill('0') << (int)byteArray[i];
-		//}
-		//std::cout << std::endl;
+		// Change window title
+		offsets[0] = 0x004EBAC4 + 1;
+		offsets[1] = 0x004EBAFB + 1;
+		ApplyTextToNewOffset(windowTitleTxt.c_str(), offsets, sizeof(offsets) / sizeof(offsets[0]));
 
 		// Text edit 200610
 		debugTextOverridePtr = (wchar_t*)DEBUG_TEXTSTRING_200610;
 		wcsncpy(debugTextOverridePtr, debugWStrStream.str().c_str(), 470); // ~474 is max!
 
-		debuglogHook = hooktype_debuglog(DEBUG_LOG_ADDR_200610);
-		debuglogNetworkHook = hooktype_debuglog_net(DEBUG_LOG_ADDR_NETWORK_200610);
-		printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200610);
-		sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200610);
+		//debuglogHook = hooktype_debuglog(DEBUG_LOG_ADDR_200610);
+		//debuglogNetworkHook = hooktype_debuglog_net(DEBUG_LOG_ADDR_NETWORK_200610);
+		//printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200610);
+		//sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200610);
 
 		//debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200610);
 		sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200610);

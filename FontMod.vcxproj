@@ -177,7 +177,9 @@ xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual
     <PostBuildEvent>
       <Command>xcopy "$(SolutionDir)$(Configuration)\*.exe" "$(SolutionDir)\ReleaseExport" /q /y
 xcopy "$(SolutionDir)$(Configuration)\*.dll" "$(SolutionDir)\ReleaseExport" /q /y
-xcopy "$(SolutionDir)DXVK\*.dll" "$(SolutionDir)\ReleaseExport" /q /y</Command>
+xcopy "$(SolutionDir)DXVK\*.dll" "$(SolutionDir)\ReleaseExport" /q /y
+xcopy "$(SolutionDir)DXVK\*.ydc" "$(SolutionDir)\ReleaseExport" /q /y
+xcopy "$(SolutionDir)DXVK\data\*" "$(SolutionDir)\ReleaseExport\data\" /q /y /e</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Export for release</Message>

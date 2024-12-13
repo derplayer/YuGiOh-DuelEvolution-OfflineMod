@@ -21,6 +21,8 @@ class YGO2 {
 
 public:
     // Generic typedefs for YGO2
+    typedef char(__fastcall* hooktype_sub_5ADCB0)(unsigned int a, unsigned int b);
+    typedef int(__cdecl* hooktype_sub_64F8E0)(int a, int b, int c, unsigned int d);
     typedef void(__fastcall* hooktype_debuglog)(const char* a, ...); //made to know what are hookable
     typedef void(__fastcall* hooktype_debuglog_net)(const char* a);
     typedef void(__fastcall* hooktype_printf)(const char* a, ...);
@@ -53,6 +55,9 @@ public:
     hooktype_duelstart      duelStartHook;
     hooktype_dueldeck       duelDeckHook;
 
+    hooktype_sub_5ADCB0     sub_5adcb0_hook;
+    hooktype_sub_64F8E0     sub_64f8e0_hook;
+
     // detour functions
     static void debug_log(char* msg, ...);
     static void __fastcall network_response_log_stub(const char* a);
@@ -64,4 +69,7 @@ public:
     static int __fastcall scene_mainloop_reimpl(void* _this, void* x, int sceneNumber);
     static int __cdecl duel_start_reimpl(int mode);
     static int __cdecl duel_deck_prepare_reimpl(int player, int, int);
+
+    static char __fastcall sub_5adcb0_reimpl(unsigned int a, unsigned int b);
+    static int __cdecl sub_64f8e0_reimpl(int a, int b, int c, unsigned int d);
 };

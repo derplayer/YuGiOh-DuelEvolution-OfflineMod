@@ -14,6 +14,8 @@ static YGO2::hooktype_debuglog_verb debuglogVerbHook_Return = nullptr;
 static YGO2::hooktype_scn_mainloop sceneMainLoopHook_Return = nullptr;
 static YGO2::hooktype_duelstart duelStartHook_Return = nullptr;
 static YGO2::hooktype_dueldeck duelDeckHook_Return = nullptr;
+static YGO2::hooktype_sub_5ADCB0 sub_5ADCB0_Return = nullptr;
+static YGO2::hooktype_sub_64F8E0 sub_64F8E0_Return = nullptr;
 
 static int lastSceneId = -1;
 
@@ -513,6 +515,30 @@ int __cdecl YGO2::duel_deck_prepare_reimpl(int player, int x, int y) {
 	return duelDeckHook_Return(player);
 }
 
+char(__fastcall* sub_5adcb0)(unsigned int, unsigned int);
+char __fastcall YGO2::sub_5adcb0_reimpl(unsigned int a, unsigned int b) {
+	printf("sub_5adcb0: a=%d, b=%d\n", a, b);
+
+	// read jump table selector
+	HANDLE hProcess = GetCurrentProcess();
+	DWORD jmpIdx;
+	if (!ReadProcessMemory(hProcess, (LPCVOID)WORD_00BEDAE0, &jmpIdx, sizeof(jmpIdx), NULL)) {
+		MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
+	}
+	printf("word_00BEDAE0 = %d\n", jmpIdx);
+
+	char ret = sub_5ADCB0_Return(a, b);
+	printf("return = %d\n", ret);
+	return ret;
+}
+
+int __cdecl YGO2::sub_64f8e0_reimpl(int a, int b, int c, unsigned int d) {
+	printf("sub_64f8e0: a=%d, b=%d, c=%d, d=%d\n", a, b, c, d);
+	int ret = sub_64F8E0_Return(a, b, c, d);
+	printf("return = %d\n", ret);
+	return ret;
+}
+
 // ### CONSTRUCTOR
 YGO2::YGO2(int ver, std::string verStr) {
 	ygoVer = ver;
@@ -623,6 +649,8 @@ YGO2::YGO2(int ver, std::string verStr) {
 		sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200610);
 		duelStartHook = hooktype_duelstart(DUEL_START_200610);
 		duelDeckHook = hooktype_dueldeck(DUEL_DECK_PREPARE_200610);
+		sub_5adcb0_hook = hooktype_sub_5ADCB0(SUB_5ADCB0);
+		sub_64f8e0_hook = hooktype_sub_64F8E0(SUB_64F8E0);
 		break;
 	case YGO2_2008_01:
 		// Force activate debug mode by nulling the param string
@@ -700,6 +728,12 @@ YGO2::YGO2(int ver, std::string verStr) {
 	// Extra #02 - Duel deck init. (deprecated, we can't enforce this mode via code easily)
 	dlogRes = MH_CreateHook(duelDeckHook, &duel_deck_prepare_reimpl, reinterpret_cast<LPVOID*>(&duelDeckHook_Return));
 	//if (dlogRes == MH_OK) MH_EnableHook(duelDeckHook);
+
+	dlogRes = MH_CreateHook(sub_5adcb0_hook, &sub_5adcb0_reimpl, reinterpret_cast<LPVOID*>(&sub_5ADCB0_Return));
+	if (dlogRes == MH_OK) MH_EnableHook(sub_5adcb0_hook);
+
+	dlogRes = MH_CreateHook(sub_64f8e0_hook, &sub_64f8e0_reimpl, reinterpret_cast<LPVOID*>(&sub_64F8E0_Return));
+	if (dlogRes == MH_OK) MH_EnableHook(sub_64f8e0_hook);
 
 	// Extra #03 - Duel start (with duel mode id)
 	//dlogRes = MH_CreateHook(duelStartHook, &duel_start_reimpl, reinterpret_cast<LPVOID*>(&duelStartHook_Return));

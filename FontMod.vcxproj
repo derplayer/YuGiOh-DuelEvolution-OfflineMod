@@ -123,7 +123,8 @@
 xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200602\" 
 xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"
 xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200801\"
-xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200810\"</Command>
+xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200810\"
+xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"</Command>
       <Message>DLL copy to debug game</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>

@@ -423,10 +423,14 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 			sceneNumber = 33;
 		}		
 		if (lastSceneId == 33 && sceneNumber == 13) { // cardswap scene -> menu
-			sceneNumber = 3;
+
+			// changed for faster fustion dbg
+			//sceneNumber = 3;
+			sceneNumber = 24;
 			// Load player deck from file & Apply for Player 0 (Human)
 			PrintMemoryVariable(deckEditAddress_Card, 253, "\n0xDECK_EDITOR_PRE\n");
-			LoadDeckFromFileToMemory(hProcess, (LPCVOID)deckEditAddress_Card, "deckOffline.ydc", &deckData); // this also adds it to the deck editor
+			LoadDeckFromFileToMemory(hProcess, (LPCVOID)deckEditAddress_Card, "deckOfflineFusionDebug.ydc", &deckData);
+			//LoadDeckFromFileToMemory(hProcess, (LPCVOID)deckEditAddress_Card, "deckOffline.ydc", &deckData); // this also adds it to the deck editor
 			PrintMemoryVariable(deckEditAddress_Card, 253, "\n0xDECK_EDITOR_POST\n");
 			applyPlayerDeckToMemory();
 
@@ -448,7 +452,9 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		if (lastSceneId == 3 && sceneNumber == 4) { //24 normal duel, 26 janken
 
 			// Shuffle and reapply player deck to memory
-			ShuffleDeckBuffer(&deckData);
+			//ShuffleDeckBuffer(&deckData);
+
+			// disabled for fusion debug faster
 			applyPlayerDeckToMemory();
 
 			// Shuffle and reapply npc deck to memory

@@ -20,3 +20,5 @@ add_subdirectory("yaml-cpp")
 include(detours.cmake)
 
 add_dependencies(${PROJECT_NAME} "yaml-cpp" "detours")
+
+# info: this is abadonware. only msvc is supported for the mod winmm dll

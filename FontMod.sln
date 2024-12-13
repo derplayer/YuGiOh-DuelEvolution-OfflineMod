@@ -11,7 +11,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FontMod", "FontMod.vcxproj"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Detours", "Detours\src\Detours.vcxproj", "{86E6C1AE-9330-4BCB-98F8-A379C2A0A62B}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Yo2Launcher", "..\Yo2Launcher\Yo2Launcher.vcxproj", "{799096A5-829F-48E5-8A34-76C2CCF8A116}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Yo2Launcher", "Yo2Launcher\Yo2Launcher.vcxproj", "{799096A5-829F-48E5-8A34-76C2CCF8A116}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libMinHook", "MinHook\build\VC17\libMinHook.vcxproj", "{F142A341-5EE0-442D-A15F-98AE9B48DBAE}"
 EndProject

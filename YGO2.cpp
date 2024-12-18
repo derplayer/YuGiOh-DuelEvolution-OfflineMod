@@ -9,6 +9,7 @@ static std::string ygoVerStr = "unk";
 // ### Trampoline returns
 static YGO2::hooktype_fprintf fprintfHook_Return = nullptr;
 static YGO2::hooktype_sprintf sprintfHook_Return = nullptr;
+static YGO2::hooktype_debuglog_file debuglogFileHook_Return = nullptr;
 static YGO2::hooktype_debuglog_verb debuglogVerbHook_Return = nullptr;
 
 static YGO2::hooktype_scn_mainloop sceneMainLoopHook_Return = nullptr;
@@ -239,6 +240,15 @@ int __fastcall  YGO2::debug_log_verb(void* _this, int a, const char* b, unsigned
 	log_write(YGO2_LOGFILE_V_NAME, bufferA, true);
 
 	return debuglogVerbHook_Return(_this, a, b, c);
+}
+
+// Define the hook function
+void* __cdecl debug_log_file(FILE* Stream, int arg1, char arg2) {
+	// Add your logging or modification code here
+	printf("debug_log_file called with args: %d, %c\n", arg1, arg2);
+
+	// Call the original function
+	return debuglogFileHook_Return(Stream, arg1, arg2);
 }
 
 void applyPlayerDeckToMemory()
@@ -532,16 +542,33 @@ char __fastcall YGO2::sub_5adcb0_reimpl(unsigned int a, unsigned int b) {
 		MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
 	}
 	printf("word_00BEDAE0 = %d\n", jmpIdx);
-
 	char ret = sub_5ADCB0_Return(a, b);
 	printf("return = %d\n", ret);
+
 	return ret;
 }
 
-int __cdecl YGO2::sub_64f8e0_reimpl(int a, int b, int c, unsigned int d) {
-	printf("sub_64f8e0: a=%d, b=%d, c=%d, d=%d\n", a, b, c, d);
-	int ret = sub_64F8E0_Return(a, b, c, d);
+int __cdecl YGO2::sub_64f8e0_reimpl(int a, int b, int c, unsigned int d, unsigned int e) {
+	// ID table at: https://github.com/derplayer/YuGiOh-PoC-ModTools/wiki/YGO:-Information-corner-(v2)#card-board-operation-ids-2007-03
+	printf("BOARD_HANDLE_64f8e0: a=%d, b=%d, c=%d, d=%d, e=%d\n", a, b, c, d, e);
+	int ret = sub_64F8E0_Return(a, b, c, d, e);
 	printf("return = %d\n", ret);
+
+	// face-up/down & atack/defence position states for all card types
+	if (a == 63 || a == 64 || a == 65 || a == 66 || a == 67 || a == 68 || a == 69 || a == 70 || a == 71 || a == 72 || a == 73) {
+		//					   id,   unk, cardId, faceflag
+		// BOARD_HANDLE_64f8e0: a=67, b=0, c=4837, d=0 # magic card set face-down
+		// BOARD_HANDLE_64f8e0: a=67, b=0, c=4837, d=1 # maigc card set face-up (activate)
+		// not enough to change the face-up state tho...
+		// d = 1;
+		printf("!BOARD_HANDLE_OVERRIDE: a=%d, b=%d, c=%d, d=%d, e=%d\n", a, b, c, d, e);
+		return sub_64F8E0_Return(a, b, c, d, e);
+	}
+	//if (a == 24)
+	//	return sub_64F8E0_Return(2, 1, c, d); // DUEL_VIEW_CARD_MOVE - aka draw card
+	//if (a == 28)
+	//	return sub_64F8E0_Return(2, 1, c, d); // DUEL_VIEW_CARD_SET iPlayer=%d iLocate=%d fTurn=%d
+
 	return ret;
 }
 
@@ -646,10 +673,11 @@ YGO2::YGO2(int ver, std::string verStr) {
 		debugTextOverridePtr = (wchar_t*)DEBUG_TEXTSTRING_200610;
 		wcsncpy(debugTextOverridePtr, debugWStrStream.str().c_str(), 470); // ~474 is max!
 
-		//debuglogHook = hooktype_debuglog(DEBUG_LOG_ADDR_200610);
-		//debuglogNetworkHook = hooktype_debuglog_net(DEBUG_LOG_ADDR_NETWORK_200610);
-		//printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200610);
-		//sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200610);
+		debuglogHook = hooktype_debuglog(DEBUG_LOG_ADDR_200610);
+		debuglogNetworkHook = hooktype_debuglog_net(DEBUG_LOG_ADDR_NETWORK_200610);
+		printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200610);
+		sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200610);
+		debuglogFileHook = hooktype_debuglog_file(DEBUG_LOG_FILE_200610);
 
 		//debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200610);
 		sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200610);
@@ -717,6 +745,10 @@ YGO2::YGO2(int ver, std::string verStr) {
 	// BASE #04 - sprintf - needs tramp. return
 	dlogRes = MH_CreateHook(sprintfHook, &sprintf_reimpl, reinterpret_cast<LPVOID*>(&sprintfHook_Return));
 	if (dlogRes == MH_OK) MH_EnableHook(sprintfHook);
+
+	// BASE #05 - file log hook
+	dlogRes = MH_CreateHook(debuglogFileHook, &debug_log_file, reinterpret_cast<LPVOID*>(&debuglogFileHook_Return));
+	if (dlogRes == MH_OK) MH_EnableHook(debuglogFileHook);
 
 	// BASE #05 - Stub log restoration (error) Hook - (disabled by default because slows the app too much)
 	//dlogRes = MH_CreateHook(debuglogVerbHook, &debug_log_verb, reinterpret_cast<LPVOID*>(&debuglogVerbHook_Return));

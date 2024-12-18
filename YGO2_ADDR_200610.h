@@ -17,6 +17,7 @@
 #define DEBUG_LOG_FPRINTF_200610			0x0			// NOT EXISTING
 #define DEBUG_LOG_SPRINTF_200610			0x006CF9D4  // lib impl.
 #define DEBUG_LOG_VERB_200610				0x00405880	// verbose log(?) - but seems to do more, so dont use
+#define DEBUG_LOG_FILE_200610				0x006CEF63  // spooky file log? player state often uses this one
 
 // Extra
 #define DEBUG_TEXTSTRING_200610				0x007768E8	// END: 00776C9D

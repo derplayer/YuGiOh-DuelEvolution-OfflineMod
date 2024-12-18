@@ -22,13 +22,14 @@ class YGO2 {
 public:
     // Generic typedefs for YGO2
     typedef char(__fastcall* hooktype_sub_5ADCB0)(unsigned int a, unsigned int b);
-    typedef int(__cdecl* hooktype_sub_64F8E0)(int a, int b, int c, unsigned int d);
+    typedef int(__cdecl* hooktype_sub_64F8E0)(int a, int b, int c, unsigned int d, unsigned int e);
     typedef void(__fastcall* hooktype_debuglog)(const char* a, ...); //made to know what are hookable
     typedef void(__fastcall* hooktype_debuglog_net)(const char* a);
     typedef void(__fastcall* hooktype_printf)(const char* a, ...);
     typedef int(*hooktype_fprintf)(FILE* const Stream, const char* const Format, ...);
     typedef int(*hooktype_sprintf)(char* const Buffer, const char* const Format, ...);
     typedef int(__fastcall* hooktype_debuglog_verb)(void*, int, const void*, unsigned int);
+    typedef void* (__cdecl* hooktype_debuglog_file)(FILE* Stream, int, char);
 
     typedef void(__fastcall* hooktype_duelscene)();
     typedef int(__stdcall* hooktype_scn_mainloop)(void*, void*);
@@ -49,7 +50,8 @@ public:
     hooktype_printf         printfHook;
     hooktype_fprintf        fprintfHook;
     hooktype_sprintf        sprintfHook;
-    hooktype_debuglog_verb   debuglogVerbHook;
+    hooktype_debuglog_verb  debuglogVerbHook;
+    hooktype_debuglog_file  debuglogFileHook;
 
     hooktype_scn_mainloop   sceneMainLoopHook;
     hooktype_duelstart      duelStartHook;
@@ -71,5 +73,5 @@ public:
     static int __cdecl duel_deck_prepare_reimpl(int player, int, int);
 
     static char __fastcall sub_5adcb0_reimpl(unsigned int a, unsigned int b);
-    static int __cdecl sub_64f8e0_reimpl(int a, int b, int c, unsigned int d);
+    static int __cdecl sub_64f8e0_reimpl(int a, int b, int c, unsigned int d, unsigned int e);
 };

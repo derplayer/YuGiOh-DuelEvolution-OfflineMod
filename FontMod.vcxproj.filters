@@ -35,6 +35,9 @@
     <ClInclude Include="YGO.h">
       <Filter>Mod</Filter>
     </ClInclude>
+    <ClInclude Include="YGO2_ADDR_200703.h">
+      <Filter>Mod\YGO2</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />

@@ -1,6 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug_200703|Win32">
+      <Configuration>Debug_200703</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_200703|x64">
+      <Configuration>Debug_200703</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
@@ -31,6 +39,12 @@
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -39,6 +53,12 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
@@ -60,10 +80,16 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -77,7 +103,21 @@
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <TargetName>winmm</TargetName>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <GenerateManifest>false</GenerateManifest>
+    <IncludePath>./Detours/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
+    <TargetName>winmm</TargetName>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <GenerateManifest>false</GenerateManifest>
+    <IncludePath>./yaml-cpp/include;./Detours/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\yaml-cpp\$(Configuration);.\Detours\lib.$(PlatformTarget);$(LibraryPath)</LibraryPath>
+    <TargetName>$(ProjectName)$(PlatformArchitecture)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|x64'">
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
     <IncludePath>./yaml-cpp/include;./Detours/include;$(IncludePath)</IncludePath>
@@ -122,13 +162,68 @@
       <Command>xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200408\" 
 xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200602\" 
 xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"
+xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200703\"
 xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200801\"
 xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200810\"
-xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"</Command>
+xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"
+xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200703\"</Command>
+      <Message>DLL copy to debug game</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FONTMOD_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>$(SolutionDir)$(Configuration)\Detours.lib;version.lib;Dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
+      <ModuleDefinitionFile>dllstub.def</ModuleDefinitionFile>
+    </Link>
+    <MASM>
+      <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
+    </MASM>
+    <PostBuildEvent>
+      <Command>xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200408\" 
+xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200602\" 
+xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"
+xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200703\"
+xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200801\"
+xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200810\"
+xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"
+xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200703\"</Command>
       <Message>DLL copy to debug game</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;FONTMOD_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>yaml-cppd.lib;detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
+      <ModuleDefinitionFile>dllstub.def</ModuleDefinitionFile>
+    </Link>
+    <MASM>
+      <PreprocessorDefinitions>X64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </MASM>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|x64'">
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -224,6 +319,7 @@ xcopy "$(SolutionDir)DXVK\data\*" "$(SolutionDir)\ReleaseExport\data\" /q /y /e<
     <ClInclude Include="YGO.h" />
     <ClInclude Include="YGO2.h" />
     <ClInclude Include="YGO2_ADDR_200610.h" />
+    <ClInclude Include="YGO2_ADDR_200703.h" />
     <ClInclude Include="YGO2_ADDR_200801.h" />
     <ClInclude Include="YGO2_ADDR_200811.h" />
     <ClInclude Include="YGOShared.hpp" />

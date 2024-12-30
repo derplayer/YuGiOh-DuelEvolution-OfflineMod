@@ -19,6 +19,7 @@ static YGO2::hooktype_sub_5ADCB0 sub_5ADCB0_Return = nullptr;
 static YGO2::hooktype_sub_64F8E0 sub_64F8E0_Return = nullptr;
 
 static int lastSceneId = -1;
+static int testIter = 0;
 
 DeckData deckData;
 DeckData deckDataNPC;
@@ -126,6 +127,19 @@ void YGO2::debug_log(char* msg, ...)
 	va_start(args, msg);
 	vsnprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), msg, args);
 	va_end(args);
+
+	// You can spam here changed to runtime
+	HANDLE hProcess = GetCurrentProcess();
+
+	if (strncmp(buffer + strlen("debug log: "), "all loaded", strlen("all loaded")) == 0) {
+		//testIter += 1;
+		// Your test function call here
+		if(testIter >= 2)
+			sub_64F8E0_Return(1, 0, 0, 0, 0);
+	}
+
+
+	//sub_64F8E0_Return(1, 0, 0, 0, 0);
 
 	// Check if buffer ends with a newline (logs have always newline) - filters out garbage logs
 	if (buffer[strlen(buffer) - 1] == '\n') {
@@ -538,9 +552,17 @@ char __fastcall YGO2::sub_5adcb0_reimpl(unsigned int a, unsigned int b) {
 	// read jump table selector
 	HANDLE hProcess = GetCurrentProcess();
 	DWORD jmpIdx;
-	if (!ReadProcessMemory(hProcess, (LPCVOID)WORD_00BEDAE0, &jmpIdx, sizeof(jmpIdx), NULL)) {
-		MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
+	if (ygoVer == YGO2_2007_03) {
+		if (!ReadProcessMemory(hProcess, (LPCVOID)WORD_00BEDAE0_200703, &jmpIdx, sizeof(jmpIdx), NULL)) {
+			MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
+		}
 	}
+	else {
+		if (!ReadProcessMemory(hProcess, (LPCVOID)WORD_00BEDAE0, &jmpIdx, sizeof(jmpIdx), NULL)) {
+			MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
+		}
+	}
+
 	printf("word_00BEDAE0 = %d\n", jmpIdx);
 	char ret = sub_5ADCB0_Return(a, b);
 	printf("return = %d\n", ret);
@@ -549,6 +571,31 @@ char __fastcall YGO2::sub_5adcb0_reimpl(unsigned int a, unsigned int b) {
 }
 
 int __cdecl YGO2::sub_64f8e0_reimpl(int a, int b, int c, unsigned int d, unsigned int e) {
+	HANDLE hProcess = GetCurrentProcess();
+
+	if (ygoVer == YGO2_2007_03) {
+		printf("BOARD_HANDLE_64f8e0: a=%d, b=%d, c=%d, d=%d, e=%d\n", a, b, c, d, e);
+
+		DWORD jmpIdx;
+		if (a == 20 && b == 0 && c == 12) {
+			//DUEL_VIEW_LIFE_SET iPlayer=0 iLife=8000
+			// a=13, b=0, c=8000, d=0, e=1
+			int ret = sub_64F8E0_Return(a, b, c, d, e);
+
+			// test: replicate 2006 workflow
+			// TODO: something is missing to init. the duel gameloop properly.
+			//sub_64F8E0_Return(1, 0, 0, 0, 0);
+			
+			return ret;
+
+		}
+
+		int ret = sub_64F8E0_Return(a, b, c, d, e);
+		printf("return = %d\n", ret);
+		return ret;
+	}
+
+	// 2006-10
 	// ID table at: https://github.com/derplayer/YuGiOh-PoC-ModTools/wiki/YGO:-Information-corner-(v2)#card-board-operation-ids-2007-03
 	printf("BOARD_HANDLE_64f8e0: a=%d, b=%d, c=%d, d=%d, e=%d\n", a, b, c, d, e);
 	int ret = sub_64F8E0_Return(a, b, c, d, e);
@@ -574,11 +621,16 @@ int __cdecl YGO2::sub_64f8e0_reimpl(int a, int b, int c, unsigned int d, unsigne
 
 // ### CONSTRUCTOR
 YGO2::YGO2(int ver, std::string verStr) {
+	// Fake a version number for older clients do not have it set yet
+	if (ver == 0 && verStr == "Ver.070321.00") { ver = YGO2_2007_03; }
+
+	// Set version vars
 	ygoVer = ver;
 	ygoVerStr = verStr;
 
 	// Debug console
 	AllocConsole();
+	HANDLE hProcess = GetCurrentProcess();
 	SetConsoleOutputCP(932);
 	SetConsoleCP(932);
 	std::wcout.imbue(std::locale("ja_JP.utf-8"));
@@ -685,6 +737,22 @@ YGO2::YGO2(int ver, std::string verStr) {
 		duelDeckHook = hooktype_dueldeck(DUEL_DECK_PREPARE_200610);
 		sub_5adcb0_hook = hooktype_sub_5ADCB0(SUB_5ADCB0);
 		sub_64f8e0_hook = hooktype_sub_64F8E0(SUB_64F8E0);
+		break;
+	case YGO2_2007_03:
+		// Force activate debug mode by nulling the param string
+		debugParam = (char*)DEBUG_PARAMFLAG_200703;
+		strncpy(debugParam, "", 5);
+		// TODO: duel crash fix (just copy fixed blob from exe)
+
+		debuglogHook = hooktype_debuglog(DEBUG_LOG_ADDR_200703);
+		//debuglogNetworkHook = hooktype_debuglog_net(DEBUG_LOG_ADDR_NETWORK_200703);
+		printfHook = hooktype_printf(DEBUG_LOG_PRINTF_200703);
+		fprintfHook = hooktype_fprintf(DEBUG_LOG_FPRINTF_200703);
+		sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200703);
+
+		sub_5adcb0_hook = hooktype_sub_5ADCB0(SUB_5ADCB0_200703);
+		sub_64f8e0_hook = hooktype_sub_64F8E0(BOARD_HANDLE_200703);
+
 		break;
 	case YGO2_2008_01:
 		// Force activate debug mode by nulling the param string

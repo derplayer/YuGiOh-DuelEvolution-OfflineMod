@@ -1,6 +1,7 @@
 #pragma once
 
 #define YGO2_2006_10 0      // doesn't exist
+#define YGO2_2007_03 32     // doesn't exist
 #define YGO2_2008_01 164
 #define YGO2_2008_11 381
 
@@ -14,6 +15,7 @@
 
 // Address includes
 #include "YGO2_ADDR_200610.h"
+#include "YGO2_ADDR_200703.h"
 #include "YGO2_ADDR_200801.h"
 #include "YGO2_ADDR_200811.h"
 

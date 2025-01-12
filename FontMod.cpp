@@ -14,17 +14,6 @@
 namespace fs = std::filesystem;
 
 #include "Detours/src/detours.h"
-#ifdef _DEBUG
-//#pragma comment(lib, "include/Debug/MinHook.x86.lib")
-//#pragma comment(lib, "include/libMinHook-x86-v141-mtd.lib")
-//#pragma comment(lib, "lib/Debug/libMinHook.x86.lib")
-#else
-//#pragma comment(lib, "include/Release/MinHook.x86.lib")
-//#pragma comment(lib, "include/libMinHook-x86-v141-mt.lib")
-//#pragma comment(lib, "lib/Release/libMinHook.x86.lib")
-#endif
-
-//#pragma comment(lib, "include/MinHook.x86.dll")
 #include "include/MinHook.h"
 #include "Util.hpp"
 #include "dllstub.hpp"
@@ -281,7 +270,7 @@ bool IsProcessRunning(const char* processName) {
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
 #ifdef NDEBUG
-	// Check if Yo2Launcher.exe is running
+	//Check if Yo2Launcher.exe is running
 	if (!IsProcessRunning("Yo2Launcher.exe")) {
 		MessageBoxA(NULL, "Please start the game over the Yo2Launcher.exe.", "Yu-Gi-Oh! Online: Duel Evolution", MB_OK | MB_ICONERROR);
 		ExitProcess(1);
@@ -328,6 +317,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		LoadDLL(path.filename());
 
 		/*
+		// Disabled font mod stuff. It was intended to fix text rendering issues but it didn't work out. Can be maybe later be reactivated for font modding.
 		path = path.remove_filename();
 		auto configPath = path / CONFIG_FILE;
 		if (!fs::exists(configPath))
@@ -419,7 +409,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			MessageBoxW(0, msg, L"Error", MB_ICONERROR);
 			return TRUE;
 		}
-		*/
+	*/
 	}
 	else if (ul_reason_for_call == DLL_PROCESS_DETACH)
 	{

@@ -13,7 +13,8 @@ You could get it from (the now shut-down) official website.
 
 # Usage
 Only the 2006-12 client is supported. (yo2setup_061213_e.exe)
-[Download](https://github.com/ysc3839/FontMod/releases) the package and just extract it into the installed game.
+[Download](https://github.com/derplayer/YuGiOh-DuelEvolution-OfflineMod/releases) the mod package and just extract it into the installed game.
+Other versions will only have the built-in debug log functionality.
 
 # Game closes after start
 When the game closes instantly after start, your GPU has issues with Vulkan support. just remove following files:

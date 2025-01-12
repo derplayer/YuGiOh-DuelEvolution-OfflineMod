@@ -103,10 +103,10 @@ YGO::YGO(std::string verStr) {
     SetConsoleOutputCP(932);
     SetConsoleCP(932);
     std::wcout.imbue(std::locale("ja_jp.utf-8"));
-    SetConsoleTitleA("YGO DEBUG CONSOLE");
+    SetConsoleTitleA("YGO1 DEBUG CONSOLE");
     freopen("CONOUT$", "w", stdout);
 
-    std::cout << "YGO (" << ygoVerStr << ") detected!" << std::endl;
+    std::cout << "YGO1 (" << ygoVerStr << ") detected!" << std::endl;
 
     switch (strToHash(ygoVerStr.c_str()))
     {
@@ -117,7 +117,8 @@ YGO::YGO(std::string verStr) {
             sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200602);
             break;
         case -1:
-            MessageBoxW(0, L"This YGO game version is not yet supported by the DLL plugin. Please submit it.", L"", 0);
+            std::cout << "YGO1 support is barebones." << std::endl;
+            MessageBoxW(0, L"This YGO1 game version is not yet supported.", L"", 0);
             return;
     }
     MH_STATUS dlogRes;

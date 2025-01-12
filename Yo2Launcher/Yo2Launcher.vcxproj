@@ -99,14 +99,17 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)_Temp\$(Configuration)Launcher\</OutDir>
     <IntDir>$(SolutionDir)_Temp\$(Configuration)Launcher\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Libs/</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|Win32'">
     <OutDir>$(SolutionDir)_Temp\$(Configuration)Launcher\</OutDir>
     <IntDir>$(SolutionDir)_Temp\$(Configuration)Launcher\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Libs/</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)_Temp\$(Configuration)Launcher\</OutDir>
     <IntDir>$(SolutionDir)_Temp\$(Configuration)Launcher\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)Libs/</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

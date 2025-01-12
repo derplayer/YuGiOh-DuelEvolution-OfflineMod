@@ -2,7 +2,8 @@
 
 #include "YGO2.h"
 #include <filesystem>
-#define YGO2_MODVERSION				11
+#include <modversion.h>
+
 static int ygoVer = 0;
 static std::string ygoVerStr = "unk";
 
@@ -12,11 +13,14 @@ static YGO2::hooktype_sprintf sprintfHook_Return = nullptr;
 static YGO2::hooktype_debuglog_file debuglogFileHook_Return = nullptr;
 static YGO2::hooktype_debuglog_verb debuglogVerbHook_Return = nullptr;
 
+// scenes
 static YGO2::hooktype_scn_mainloop sceneMainLoopHook_Return = nullptr;
 static YGO2::hooktype_duelstart duelStartHook_Return = nullptr;
 static YGO2::hooktype_dueldeck duelDeckHook_Return = nullptr;
-static YGO2::hooktype_sub_5ADCB0 sub_5ADCB0_Return = nullptr;
-static YGO2::hooktype_sub_64F8E0 sub_64F8E0_Return = nullptr;
+
+// functions
+static YGO2::hooktype_cardstate_handle cardstate_handle_Return = nullptr;
+static YGO2::hooktype_board_handle board_handle_Return = nullptr;
 
 static int lastSceneId = -1;
 static int testIter = 0;
@@ -57,6 +61,8 @@ const char* GetExceptionCodeDescription(DWORD code)
 	case EXCEPTION_PRIV_INSTRUCTION: return "EXCEPTION_PRIV_INSTRUCTION";
 	case EXCEPTION_SINGLE_STEP: return "EXCEPTION_SINGLE_STEP";
 	case EXCEPTION_STACK_OVERFLOW: return "EXCEPTION_STACK_OVERFLOW";
+	case DBG_PRINTEXCEPTION_C: return "DBG_PRINTEXCEPTION_C";
+	case DBG_PRINTEXCEPTION_WIDE_C: return "DBG_PRINTEXCEPTION_WIDE_C";
 	default: return "UNKNOWN_EXCEPTION";
 	}
 }
@@ -94,8 +100,10 @@ LONG CALLBACK VectoredHandler(PEXCEPTION_POINTERS ExceptionInfo)
 	// Convert log message to string
 	std::string logStr = logMessage.str();
 
-	// Write to the log file
-	log_write(YGO2_LOGFILE_NAME, logStr.c_str(), false);
+	// Write to the log file (when not DBG_PRINTEXCEPTION_C, debugger detection? only happens in Release builds when no debugger attached)
+	if (exceptionCode != DBG_PRINTEXCEPTION_C) {
+		log_write(YGO2_LOGFILE_NAME, logStr.c_str(), false);
+	}
 
 	// For other exceptions, continue execution
 	return EXCEPTION_EXECUTE_HANDLER;
@@ -128,18 +136,12 @@ void YGO2::debug_log(char* msg, ...)
 	vsnprintf(buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), msg, args);
 	va_end(args);
 
-	// You can spam here changed to runtime
+	// INFO: You can spam here changes to runtime (the log is very often executed at various runtime stages)
 	HANDLE hProcess = GetCurrentProcess();
-
 	if (strncmp(buffer + strlen("debug log: "), "all loaded", strlen("all loaded")) == 0) {
 		//testIter += 1;
-		// Your test function call here
-		if(testIter >= 2)
-			sub_64F8E0_Return(1, 0, 0, 0, 0);
+		//if (testIter >= 2) { board_handle_Return(1, 0, 0, 0, 0); }
 	}
-
-
-	//sub_64F8E0_Return(1, 0, 0, 0, 0);
 
 	// Check if buffer ends with a newline (logs have always newline) - filters out garbage logs
 	if (buffer[strlen(buffer) - 1] == '\n') {
@@ -420,14 +422,20 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 	//	}
 	//}
 	//PrintMemory(baseAddressKB, "0xKABAN_POST\n");
-
+	
 	// Scene implementation
 	char scnStr[32];
 	sprintf(scnStr, "Loading scene id: %d", sceneNumber);
 	log_write(YGO2_LOGFILE_NAME, scnStr, true);
 	POINT mouse = GetMousePositionInWindow();
+	bool enableFastTestDuel = false;
 	//int* duelModeDword = (int*)0x012A9084; // 200811
  
+#ifdef _DEBUG
+	// skip main menu logic for fast testing of stuff like special summon issues
+	enableFastTestDuel = true;
+#endif 
+
 	// override scene
 	// important scene ids: 11 (unknown scene)
 	// 12 main ingame lobby (broken, starts deck edit scene when no deck), 13 tournament mode/tournament scene
@@ -436,11 +444,17 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 	// 36 deck edit
 	//sceneNumber = 15; // forces debug menu at start
 
-	// 2006-12 Offline mode
-	if (ygoVer == 0) {
+	// YGO2_2006_10 aka 2006-12-13 Offline mode
+	if (ygoVer == YGO2_2006_10) {
 		// ONLY FOR TESTING: force debug menu
 		//MH_DisableHook(sceneMainLoopHook_Return);
 		//if (lastSceneId == -1) { sceneNumber = 13; lastSceneId = 26; }
+
+		// skip all stuff straight into duel in debug test mode
+		if (enableFastTestDuel && lastSceneId == -1) {
+			sceneNumber = 13;
+			lastSceneId = 33;
+		}
 
 		if (lastSceneId == -1) { sceneNumber = 2; } // Overwrite default to logo scene (needed to init UI returns)
 		if (lastSceneId == 2 && sceneNumber == 3) { // logo scene -> cardswap engine init. scene
@@ -448,13 +462,17 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		}		
 		if (lastSceneId == 33 && sceneNumber == 13) { // cardswap scene -> menu
 
-			// changed for faster fustion dbg
-			//sceneNumber = 3;
-			sceneNumber = 24;
-			// Load player deck from file & Apply for Player 0 (Human)
 			PrintMemoryVariable(deckEditAddress_Card, 253, "\n0xDECK_EDITOR_PRE\n");
-			LoadDeckFromFileToMemory(hProcess, (LPCVOID)deckEditAddress_Card, "deckOfflineFusionDebug.ydc", &deckData);
-			//LoadDeckFromFileToMemory(hProcess, (LPCVOID)deckEditAddress_Card, "deckOffline.ydc", &deckData); // this also adds it to the deck editor
+			if (enableFastTestDuel) {
+				sceneNumber = 24; // go directly to duel for faster fustion dbg
+				// Load player deck from file & Apply for Player 0 (Human)
+				LoadDeckFromFileToMemory(hProcess, (LPCVOID)deckEditAddress_Card, "deckOfflineFusionDebug.ydc", &deckData);
+			}
+			else {
+				sceneNumber = 3; // load main menu
+				LoadDeckFromFileToMemory(hProcess, (LPCVOID)deckEditAddress_Card, "deckOffline.ydc", &deckData); // this also adds it to the deck editor
+			}
+
 			PrintMemoryVariable(deckEditAddress_Card, 253, "\n0xDECK_EDITOR_POST\n");
 			applyPlayerDeckToMemory();
 
@@ -475,10 +493,8 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		// FASTER SHORTCUT TO DUEL SETUP (menu --> play)
 		if (lastSceneId == 3 && sceneNumber == 4) { //24 normal duel, 26 janken
 
-			// Shuffle and reapply player deck to memory
-			//ShuffleDeckBuffer(&deckData);
-
-			// disabled for fusion debug faster
+			// Shuffle and reapply player deck to memory (disabled for fast test duel)
+			if (!enableFastTestDuel) ShuffleDeckBuffer(&deckData);
 			applyPlayerDeckToMemory();
 
 			// Shuffle and reapply npc deck to memory
@@ -499,11 +515,11 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		if (lastSceneId == 25 && sceneNumber == 13) { sceneNumber = 3; }
 
 		// OUTSIDE OF THE STANDARD FLOW TODO:
-		//if (lastSceneId == 3 && sceneNumber == 4) { sceneNumber = 3; } // Delete records dialog (bricks main btn xD - diabled via txt)
+		//if (lastSceneId == 3 && sceneNumber == 4) { sceneNumber = 3; } // Delete records dialog (bricks main btn - diabled via txt)
 		if (lastSceneId == 32 && sceneNumber == 13) { // deck editor back to menu + save deck in ydc
 			sceneNumber = 3;
 			WriteDeckFromMemoryToFile(hProcess, (LPCVOID)deckEditAddress_Card, "deckOffline.ydc");
-			// Enforce this behaviour, because the deck editor sometimes doesn't write it back to player?
+			// Enforce this behaviour, because the deck editor sometimes doesn't write it back to player - confirmed by testers
 			LoadDeckFromFileToMemory(hProcess, (LPCVOID)deckEditAddress_Card, "deckOffline.ydc", &deckData); // this also adds it to the deck editor
 		}
 		// TODO: we should also do a NPC deck edit dialog
@@ -545,9 +561,9 @@ int __cdecl YGO2::duel_deck_prepare_reimpl(int player, int x, int y) {
 	return duelDeckHook_Return(player);
 }
 
-char(__fastcall* sub_5adcb0)(unsigned int, unsigned int);
-char __fastcall YGO2::sub_5adcb0_reimpl(unsigned int a, unsigned int b) {
-	printf("sub_5adcb0: a=%d, b=%d\n", a, b);
+char(__fastcall* cardstate_handle)(unsigned int, unsigned int);
+char __fastcall YGO2::cardstate_handle_reimpl(unsigned int a, unsigned int b) {
+	printf("cardstate_handle: a=%d, b=%d\n", a, b);
 
 	// read jump table selector
 	HANDLE hProcess = GetCurrentProcess();
@@ -564,66 +580,67 @@ char __fastcall YGO2::sub_5adcb0_reimpl(unsigned int a, unsigned int b) {
 	}
 
 	printf("word_00BEDAE0 = %d\n", jmpIdx);
-	char ret = sub_5ADCB0_Return(a, b);
+	char ret = cardstate_handle_Return(a, b);
 	printf("return = %d\n", ret);
 
 	return ret;
 }
 
-int __cdecl YGO2::sub_64f8e0_reimpl(int a, int b, int c, unsigned int d, unsigned int e) {
+int __cdecl YGO2::board_handle_reimpl(int a, int b, int c, unsigned int d, unsigned int e) {
 	HANDLE hProcess = GetCurrentProcess();
 
 	if (ygoVer == YGO2_2007_03) {
-		printf("BOARD_HANDLE_64f8e0: a=%d, b=%d, c=%d, d=%d, e=%d\n", a, b, c, d, e);
+		printf("BOARD_HANDLE: a=%d, b=%d, c=%d, d=%d, e=%d\n", a, b, c, d, e);
 
 		DWORD jmpIdx;
 		if (a == 20 && b == 0 && c == 12) {
 			//DUEL_VIEW_LIFE_SET iPlayer=0 iLife=8000
 			// a=13, b=0, c=8000, d=0, e=1
-			int ret = sub_64F8E0_Return(a, b, c, d, e);
+			int ret = board_handle_Return(a, b, c, d, e);
 
 			// test: replicate 2006 workflow
 			// TODO: something is missing to init. the duel gameloop properly.
-			//sub_64F8E0_Return(1, 0, 0, 0, 0);
+			//board_handle_Return(1, 0, 0, 0, 0);
 			
 			return ret;
 
 		}
 
-		int ret = sub_64F8E0_Return(a, b, c, d, e);
+		int ret = board_handle_Return(a, b, c, d, e);
 		printf("return = %d\n", ret);
 		return ret;
 	}
 
 	// 2006-10
 	// ID table at: https://github.com/derplayer/YuGiOh-PoC-ModTools/wiki/YGO:-Information-corner-(v2)#card-board-operation-ids-2007-03
-	printf("BOARD_HANDLE_64f8e0: a=%d, b=%d, c=%d, d=%d, e=%d\n", a, b, c, d, e);
-	int ret = sub_64F8E0_Return(a, b, c, d, e);
+	printf("BOARD_HANDLE: a=%d, b=%d, c=%d, d=%d, e=%d\n", a, b, c, d, e);
+	int ret = board_handle_Return(a, b, c, d, e);
 	printf("return = %d\n", ret);
 
 	// face-up/down & atack/defence position states for all card types
 	if (a == 63 || a == 64 || a == 65 || a == 66 || a == 67 || a == 68 || a == 69 || a == 70 || a == 71 || a == 72 || a == 73) {
 		//					   id,   unk, cardId, faceflag
-		// BOARD_HANDLE_64f8e0: a=67, b=0, c=4837, d=0 # magic card set face-down
-		// BOARD_HANDLE_64f8e0: a=67, b=0, c=4837, d=1 # maigc card set face-up (activate)
+		// BOARD_HANDLE_board_handle: a=67, b=0, c=4837, d=0 # magic card set face-down
+		// BOARD_HANDLE_board_handle: a=67, b=0, c=4837, d=1 # maigc card set face-up (activate)
 		// not enough to change the face-up state tho...
 		// d = 1;
 		printf("!BOARD_HANDLE_OVERRIDE: a=%d, b=%d, c=%d, d=%d, e=%d\n", a, b, c, d, e);
-		return sub_64F8E0_Return(a, b, c, d, e);
+		return board_handle_Return(a, b, c, d, e);
 	}
 	//if (a == 24)
-	//	return sub_64F8E0_Return(2, 1, c, d); // DUEL_VIEW_CARD_MOVE - aka draw card
+	//	return board_handle_Return(2, 1, c, d); // DUEL_VIEW_CARD_MOVE - aka draw card
 	//if (a == 28)
-	//	return sub_64F8E0_Return(2, 1, c, d); // DUEL_VIEW_CARD_SET iPlayer=%d iLocate=%d fTurn=%d
+	//	return board_handle_Return(2, 1, c, d); // DUEL_VIEW_CARD_SET iPlayer=%d iLocate=%d fTurn=%d
 
 	return ret;
 }
 
 // ### CONSTRUCTOR
 YGO2::YGO2(int ver, std::string verStr) {
-	// Fake a version number for older clients do not have it set yet
+	// Fake a version number for older clients that do not have it set
+	if (ver == 0 && verStr == "Ver.061211.00") { ver = YGO2_2006_12; }
 	if (ver == 0 && verStr == "Ver.070321.00") { ver = YGO2_2007_03; }
-
+	
 	// Set version vars
 	ygoVer = ver;
 	ygoVerStr = verStr;
@@ -634,7 +651,8 @@ YGO2::YGO2(int ver, std::string verStr) {
 	SetConsoleOutputCP(932);
 	SetConsoleCP(932);
 	std::wcout.imbue(std::locale("ja_JP.utf-8"));
-	SetConsoleTitleA("YGO2 DEBUG CONSOLE");
+	std::string consoleString = "YGO2 DEBUG CONSOLE - Loaded game: " + ygoVerStr;
+	SetConsoleTitleA(consoleString.c_str());
 
 	FILE* fp;
 	freopen_s(&fp, "CONOUT$", "w", stdout);
@@ -647,13 +665,13 @@ YGO2::YGO2(int ver, std::string verStr) {
 	// Set console window size
 	HWND hwndConsole = GetConsoleWindow();
 	MoveWindow(hwndConsole, 0, 0, 700, 768, TRUE);
-	//MoveWindow(hwndConsole, 0, 0, 320, 778, TRUE); //Youtube OBS
+	//MoveWindow(hwndConsole, 0, 0, 320, 778, TRUE); // for Youtube
 
 	std::cout << "Yu-Gi-Oh! Duel Evolution: Offline Mod - alpha test version 0." << YGO2_MODVERSION << ") started." << std::endl;
 	std::cout << "YGO2 (" << ygoVerStr << " - exeVer " << ygoVer << ") detected!" << std::endl;
 
 	// Add the vectored exception handler
-	AddVectoredExceptionHandler(1, VectoredHandler);
+	AddVectoredExceptionHandler(TRUE, VectoredHandler);
 
 	// Debug menu change text
 	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
@@ -676,7 +694,7 @@ YGO2::YGO2(int ver, std::string verStr) {
                     \n\n@9 Created by DerPlayer and PhilYeahz";
 
 	// the beta have no debug hotkeys
-	if (ygoVer != 0) {
+	if (ygoVer != YGO2_2006_10) {
 		debugWStrStream << "\n\n@9 Hotkeys for additional debug output : SHIFT + W, SHIFT + E, SHIFT + X, SHIFT + C";
 	}
 
@@ -684,8 +702,8 @@ YGO2::YGO2(int ver, std::string verStr) {
 	DWORD oldProtect;
 	DWORD offsets[2];
 	DWORD offsetsTXT[2];
-	char* txtPtr = "\nThis is an alpha version of the Duel Evolution\noffline mod. Bugs are expected. Do not share this build!\nFor more infos read the @3README.TXT";
-	std::string windowTitleTxt = "Yu-Gi-Oh! Duel Evolution: Offline Mod - alpha test 0." + std::to_string(YGO2_MODVERSION);
+	char* txtPtr = "\nThis is an alpha version of the Duel Evolution offline mod.\nBugs are expected.\nDo you still have old client files that we're missing?\nPlease share them on GitHub or the Discord channel";
+	std::string windowTitleTxt = "Yu-Gi-Oh! Duel Evolution: Offline Mod - alpha test 0." + std::to_string(YGO2_MODVERSION) + " - by DerPlayer - github.com/derplayer/YuGiOh-DuelEvolution-OfflineMod";
 
 	switch (ver)
 	{
@@ -707,6 +725,7 @@ YGO2::YGO2(int ver, std::string verStr) {
 		offsets[0] = SCN_CARDSWAP_BTN_RETURN_PTR_200610 + 1;
 		offsets[1] = SCN_CARDSWAP_BTN_RETURN_PTR_200610 + 16;
 		ApplyTextToNewOffset("@1Click here to start.", offsets, sizeof(offsets) / sizeof(offsets[0]));
+		
 		offsets[0] = 0x00509361 + 1;
 		offsets[1] = 0x00509361 + 16;
 		// make the second button invisible
@@ -735,10 +754,15 @@ YGO2::YGO2(int ver, std::string verStr) {
 		sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200610);
 		duelStartHook = hooktype_duelstart(DUEL_START_200610);
 		duelDeckHook = hooktype_dueldeck(DUEL_DECK_PREPARE_200610);
-		sub_5adcb0_hook = hooktype_sub_5ADCB0(SUB_5ADCB0);
-		sub_64f8e0_hook = hooktype_sub_64F8E0(SUB_64F8E0);
+		cardstate_handle_hook = hooktype_cardstate_handle(FUNC_CARDSTATE_HANDLE_200610);
+		board_handle_hook = hooktype_board_handle(FUNC_BOARD_HANDLE_200610);
+		std::cout << "Hook addresses loaded." << std::endl;
+		break;
+	case YGO2_2006_12:
+		std::cout << "THIS CLIENT (" << ygoVerStr << " - exeVer " << ygoVer << ") IS NOT SUPPORTED YET!" << std::endl;
 		break;
 	case YGO2_2007_03:
+		std::cout << "THIS CLIENT (" << ygoVerStr << " - exeVer " << ygoVer << ") IS ONLY PARTIALLY SUPPORTED!" << std::endl;
 		// Force activate debug mode by nulling the param string
 		debugParam = (char*)DEBUG_PARAMFLAG_200703;
 		strncpy(debugParam, "", 5);
@@ -750,11 +774,12 @@ YGO2::YGO2(int ver, std::string verStr) {
 		fprintfHook = hooktype_fprintf(DEBUG_LOG_FPRINTF_200703);
 		sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200703);
 
-		sub_5adcb0_hook = hooktype_sub_5ADCB0(SUB_5ADCB0_200703);
-		sub_64f8e0_hook = hooktype_sub_64F8E0(BOARD_HANDLE_200703);
-
+		cardstate_handle_hook = hooktype_cardstate_handle(FUNC_CARDSTATE_HANDLE_200703);
+		board_handle_hook = hooktype_board_handle(FUNC_BOARD_HANDLE_200703);
+		std::cout << "Hook addresses loaded." << std::endl;
 		break;
 	case YGO2_2008_01:
+		std::cout << "THIS CLIENT (" << ygoVerStr << " - exeVer " << ygoVer << ") IS ONLY PARTIALLY SUPPORTED!" << std::endl;
 		// Force activate debug mode by nulling the param string
 		debugParam = (char*)DEBUG_PARAMFLAG_200801;
 		strncpy(debugParam, "", 5);
@@ -765,10 +790,11 @@ YGO2::YGO2(int ver, std::string verStr) {
 		fprintfHook = hooktype_fprintf(DEBUG_LOG_FPRINTF_200801);
 		sprintfHook = hooktype_sprintf(DEBUG_LOG_SPRINTF_200801);
 		//debuglogVerbHook = hooktype_debuglog_verb(DEBUG_LOG_VERB_200801);
-
 		//sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200801);
+		std::cout << "Hook addresses loaded." << std::endl;
 		break;
 	case YGO2_2008_11:
+		std::cout << "THIS CLIENT (" << ygoVerStr << " - exeVer " << ygoVer << ") IS ONLY PARTIALLY SUPPORTED!" << std::endl;
 		// Force activate debug scene mode by nulling the param string
 		debugParam = (char*)DEBUG_PARAMFLAG_200811;
 		strncpy(debugParam, "", 5);
@@ -787,11 +813,14 @@ YGO2::YGO2(int ver, std::string verStr) {
 		sceneMainLoopHook = hooktype_scn_mainloop(SCN_MAINLOOP_200811);
 		//duelHook = hooktype_duelscene(DUEL_ADDR_200811);
 		//duelStartHook = hooktype_duelstart(DUEL_START_200811); - corrupts the game too much
+		std::cout << "Hook addresses loaded." << std::endl;
 		break;
 	case -1:
-		MessageBoxW(0, L"This YGO2 game version is not yet supported by the DLL plugin. Please submit it.", L"", 0);
+		std::cout << "THIS CLIENT (" << ygoVerStr << " - exeVer " << ygoVer << ") IS NOT KNOWN YET! PLEASE SUBMIT AT GITHUB OR DISCORD" << std::endl;
+		MessageBoxW(0, L"This game client is not yet known.Please submit it at Discord or GitHub.", L"", 0);
 		return;
 	}
+
 	MH_STATUS dlogRes;
 
 	// BASE #00 - Stub log restoration Hook
@@ -835,13 +864,15 @@ YGO2::YGO2(int ver, std::string verStr) {
 	dlogRes = MH_CreateHook(duelDeckHook, &duel_deck_prepare_reimpl, reinterpret_cast<LPVOID*>(&duelDeckHook_Return));
 	//if (dlogRes == MH_OK) MH_EnableHook(duelDeckHook);
 
-	dlogRes = MH_CreateHook(sub_5adcb0_hook, &sub_5adcb0_reimpl, reinterpret_cast<LPVOID*>(&sub_5ADCB0_Return));
-	if (dlogRes == MH_OK) MH_EnableHook(sub_5adcb0_hook);
+	dlogRes = MH_CreateHook(cardstate_handle_hook, &cardstate_handle_reimpl, reinterpret_cast<LPVOID*>(&cardstate_handle_Return));
+	if (dlogRes == MH_OK) MH_EnableHook(cardstate_handle_hook);
 
-	dlogRes = MH_CreateHook(sub_64f8e0_hook, &sub_64f8e0_reimpl, reinterpret_cast<LPVOID*>(&sub_64F8E0_Return));
-	if (dlogRes == MH_OK) MH_EnableHook(sub_64f8e0_hook);
+	dlogRes = MH_CreateHook(board_handle_hook, &board_handle_reimpl, reinterpret_cast<LPVOID*>(&board_handle_Return));
+	if (dlogRes == MH_OK) MH_EnableHook(board_handle_hook);
 
 	// Extra #03 - Duel start (with duel mode id)
 	//dlogRes = MH_CreateHook(duelStartHook, &duel_start_reimpl, reinterpret_cast<LPVOID*>(&duelStartHook_Return));
 	//if (dlogRes == MH_OK) MH_EnableHook(duelStartHook);
+
+	std::cout << "Hooks enabled." << std::endl;
 }

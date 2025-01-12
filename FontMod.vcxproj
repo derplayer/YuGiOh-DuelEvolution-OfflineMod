@@ -99,7 +99,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
-    <IncludePath>./Detours/include;$(IncludePath)</IncludePath>
+    <IncludePath>./Detours/include;$(IncludePath);$(SolutionDir)Libs/</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <TargetName>winmm</TargetName>
     <OutDir>$(SolutionDir)_Temp\$(Configuration)\</OutDir>
@@ -108,7 +108,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
-    <IncludePath>./Detours/include;$(IncludePath)</IncludePath>
+    <IncludePath>./Detours/include;$(IncludePath);$(SolutionDir)Libs/</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <TargetName>winmm</TargetName>
     <OutDir>$(SolutionDir)_Temp\$(Configuration)\</OutDir>
@@ -131,7 +131,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <GenerateManifest>false</GenerateManifest>
-    <IncludePath>./Detours/include;$(IncludePath)</IncludePath>
+    <IncludePath>./Detours/include;$(IncludePath);$(SolutionDir)Libs/</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <TargetName>winmm</TargetName>
     <OutDir>$(SolutionDir)_Temp\$(Configuration)\</OutDir>
@@ -168,10 +168,12 @@
       <Command>xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200408\" 
 xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200602\" 
 xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200612\"
+xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200612_28\"
 xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200703\"
 xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200801\"
 xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200810\"
 xcopy /q /y "$(SolutionDir)DXVK\*.*" "$(SolutionDir)_Games\200612\"
+xcopy /q /y "$(SolutionDir)DXVK\*.*" "$(SolutionDir)_Games\200612_28\"
 xcopy /q /y "$(SolutionDir)DXVK\*.*" "$(SolutionDir)_Games\200703\"</Command>
       <Message>DLL copy to debug game</Message>
     </PostBuildEvent>
@@ -200,10 +202,12 @@ xcopy /q /y "$(SolutionDir)DXVK\*.*" "$(SolutionDir)_Games\200703\"</Command>
       <Command>xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200408\" 
 xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200602\" 
 xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200612\"
+xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200612_28\"
 xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200703\"
 xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200801\"
 xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200810\"
 xcopy /q /y "$(SolutionDir)DXVK\*.*" "$(SolutionDir)_Games\200612\"
+xcopy /q /y "$(SolutionDir)DXVK\*.*" "$(SolutionDir)_Games\200612_28\"
 xcopy /q /y "$(SolutionDir)DXVK\*.*" "$(SolutionDir)_Games\200703\"</Command>
       <Message>DLL copy to debug game</Message>
     </PostBuildEvent>

@@ -246,6 +246,7 @@ ModelManifest.xml
 
 # Client folder
 _Games/
+_ReleaseExport/
 
 # Other stuff
 _Temp/

@@ -17,11 +17,11 @@ namespace fs = std::filesystem;
 #ifdef _DEBUG
 //#pragma comment(lib, "include/Debug/MinHook.x86.lib")
 //#pragma comment(lib, "include/libMinHook-x86-v141-mtd.lib")
-#pragma comment(lib, "lib/Debug/libMinHook.x86.lib")
+//#pragma comment(lib, "lib/Debug/libMinHook.x86.lib")
 #else
 //#pragma comment(lib, "include/Release/MinHook.x86.lib")
 //#pragma comment(lib, "include/libMinHook-x86-v141-mt.lib")
-#pragma comment(lib, "lib/Release/libMinHook.x86.lib")
+//#pragma comment(lib, "lib/Release/libMinHook.x86.lib")
 #endif
 
 //#pragma comment(lib, "include/MinHook.x86.dll")

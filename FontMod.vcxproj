@@ -157,7 +157,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(SolutionDir)$(Configuration)\Detours.lib;version.lib;Dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)_Temp\$(Configuration)\Detours.lib;$(SolutionDir)_Temp\$(Configuration)\libMinHook.x86.lib;version.lib;Dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
       <ModuleDefinitionFile>dllstub.def</ModuleDefinitionFile>
     </Link>
@@ -165,14 +165,14 @@
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
     </MASM>
     <PostBuildEvent>
-      <Command>xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200408\" 
-xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200602\" 
-xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"
-xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200703\"
-xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200801\"
-xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200810\"
-xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"
-xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200703\"</Command>
+      <Command>xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200408\" 
+xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200602\" 
+xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200612\"
+xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200703\"
+xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200801\"
+xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200810\"
+xcopy /q /y "$(SolutionDir)DXVK\*.*" "$(SolutionDir)_Games\200612\"
+xcopy /q /y "$(SolutionDir)DXVK\*.*" "$(SolutionDir)_Games\200703\"</Command>
       <Message>DLL copy to debug game</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -189,7 +189,7 @@ xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGi
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(SolutionDir)$(Configuration)\Detours.lib;version.lib;Dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)_Temp\$(Configuration)\Detours.lib;$(SolutionDir)_Temp\$(Configuration)\libMinHook.x86.lib;version.lib;Dbghelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
       <ModuleDefinitionFile>dllstub.def</ModuleDefinitionFile>
     </Link>
@@ -197,14 +197,14 @@ xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGi
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
     </MASM>
     <PostBuildEvent>
-      <Command>xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200408\" 
-xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200602\" 
-xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"
-xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200703\"
-xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200801\"
-xcopy /q /y "$(SolutionDir)$(Configuration)\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200810\"
-xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"
-xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200703\"</Command>
+      <Command>xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200408\" 
+xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200602\" 
+xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200612\"
+xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200703\"
+xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200801\"
+xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)\*.*" "$(SolutionDir)_Games\200810\"
+xcopy /q /y "$(SolutionDir)DXVK\*.*" "$(SolutionDir)_Games\200612\"
+xcopy /q /y "$(SolutionDir)DXVK\*.*" "$(SolutionDir)_Games\200703\"</Command>
       <Message>DLL copy to debug game</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -267,7 +267,7 @@ xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGi
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
-      <AdditionalDependencies>$(SolutionDir)$(Configuration)\Detours.lib;version.lib;msvcrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)_Temp\$(Configuration)\Detours.lib;$(SolutionDir)_Temp\$(Configuration)\libMinHook.x86.lib;version.lib;msvcrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
       <ModuleDefinitionFile>dllstub.def</ModuleDefinitionFile>
       <LinkTimeCodeGeneration>
@@ -277,14 +277,14 @@ xcopy /q /y "$(SolutionDir)DXVK\*.*" "H:\Development\Projects\Visual Studio\YuGi
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
     </MASM>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)$(Configuration)\*.exe" "$(SolutionDir)\ReleaseExport" /q /y
-xcopy "$(SolutionDir)$(Configuration)\*.dll" "$(SolutionDir)\ReleaseExport" /q /y
-xcopy "$(SolutionDir)DXVK\*.dll" "$(SolutionDir)\ReleaseExport" /q /y
-xcopy "$(SolutionDir)DXVK\*.ydc" "$(SolutionDir)\ReleaseExport" /q /y
-xcopy "$(SolutionDir)DXVK\data\*" "$(SolutionDir)\ReleaseExport\data\" /q /y /e</Command>
+      <Command>xcopy "$(SolutionDir)_Temp\$(Configuration)\*.exe" "$(SolutionDir)\_ReleaseExport" /q /y
+xcopy "$(SolutionDir)_Temp\$(Configuration)\*.dll" "$(SolutionDir)\_ReleaseExport" /q /y
+xcopy "$(SolutionDir)DXVK\*.dll" "$(SolutionDir)\_ReleaseExport" /q /y
+xcopy "$(SolutionDir)DXVK\*.ydc" "$(SolutionDir)\_ReleaseExport" /q /y
+xcopy "$(SolutionDir)DXVK\data\*" "$(SolutionDir)\_ReleaseExport\data\" /q /y /e</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message>Export for release</Message>
+      <Message>Generic export for release</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

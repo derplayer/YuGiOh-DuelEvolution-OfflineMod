@@ -7,9 +7,11 @@ https://discord.com/invite/GAKKaJYwF7
 Help wanted!
 
 # What is Yu-Gi-Oh! Duel Evolution?
-Yu-Gi-Oh! Duel Evolution was an official free game released at december 2006.
+Yu-Gi-Oh! Duel Evolution was an official free to download videogame released at December 2006.
 You could get it from (the now shut-down) official website.
 [More infos here.](https://yugioh.fandom.com/wiki/Yu-Gi-Oh!_Online:_Duel_Evolution)
+
+![Alt text](/_Misc/scr01.jpg?raw=true "Main Menu")
 
 # Usage
 Only the 2006-12 client is supported. (yo2setup_061213_e.exe)
@@ -22,7 +24,7 @@ When the game closes instantly after start, your GPU has issues with Vulkan supp
 This will disable graphic fixes on modern operating system, but the game should then run.
 
 # Antivirus issues
-Due to injecting a debugger dll (TitanEngine.dll) it causes trouble with some AV software. One way to fix it would be to fix the softlock properly.
+Due to injecting a debugger dll (x64dbg's TitanEngine.dll) it causes trouble with some AV software. One way to fix it would be to fix the softlock properly.
 But i don't know how. Pull request are welcome!
 
 ## What has the mod to offer?:
@@ -35,6 +37,8 @@ But i don't know how. Pull request are welcome!
 * Backporting of stuff from newer clients like
 	- Card *.bin files
 	- The new bin files were taken from the 2006-12-28 client, but are not thoroughly tested. But they do not introduce new cards to the pool, so it should be fine.
+
+![Alt text](/_Misc/scr02.jpg?raw=true "Main Menu")
 
 # FAQ:
 * How to edit a NPC deck in-game?
@@ -50,7 +54,7 @@ But i don't know how. Pull request are welcome!
 	- Feel free to make an issue ticket for an broken card.
 
 * The deck editor doesn't show the trunk cards anymore?
-	-Press the button at the top right with the card trunk number. The filters are buggy.
+	- Press the button at the top right with the card trunk number. The filters are buggy.
 
 * I made a cool deck, can it be included in this mod?
 - Sure why not, submit it to this repo (the ydc file) and i will add it in the future as a community NPC deck. (Maybe even as an mini chibi NPC avatar walking on the game map with your nickname? haha)

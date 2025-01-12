@@ -93,21 +93,21 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)_Temp\$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)_Temp\$(Configuration)\</IntDir>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules />
     <CodeAnalysisRuleAssemblies />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|Win32'">
     <OutDir>$(SolutionDir)_Temp\$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)_Temp\$(Configuration)\</IntDir>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules />
     <CodeAnalysisRuleAssemblies />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)_Temp\$(Configuration)\</OutDir>
-    <IntDir>$(Configuration)\</IntDir>
+    <IntDir>$(SolutionDir)_Temp\$(Configuration)\</IntDir>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules />
     <CodeAnalysisRuleAssemblies />

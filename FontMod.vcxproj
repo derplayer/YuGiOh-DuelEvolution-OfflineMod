@@ -103,6 +103,7 @@
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <TargetName>winmm</TargetName>
     <OutDir>$(SolutionDir)_Temp\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)_Temp\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -111,6 +112,7 @@
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <TargetName>winmm</TargetName>
     <OutDir>$(SolutionDir)_Temp\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)_Temp\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -133,6 +135,7 @@
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <TargetName>winmm</TargetName>
     <OutDir>$(SolutionDir)_Temp\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)_Temp\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

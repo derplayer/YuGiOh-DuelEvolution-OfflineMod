@@ -97,13 +97,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)Launcher\</OutDir>
+    <OutDir>$(SolutionDir)_Temp\$(Configuration)Launcher\</OutDir>
+    <IntDir>$(SolutionDir)_Temp\$(Configuration)Launcher\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)Launcher\</OutDir>
+    <OutDir>$(SolutionDir)_Temp\$(Configuration)Launcher\</OutDir>
+    <IntDir>$(SolutionDir)_Temp\$(Configuration)Launcher\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)$(Configuration)Launcher\</OutDir>
+    <OutDir>$(SolutionDir)_Temp\$(Configuration)Launcher\</OutDir>
+    <IntDir>$(SolutionDir)_Temp\$(Configuration)Launcher\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -117,7 +120,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /q /y "$(SolutionDir)$(Configuration)Launcher\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"</Command>
+      <Command>xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)Launcher\*.*" "$(SolutionDir)_Games\200612\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>COPY LAUNCHER EXE</Message>
@@ -135,7 +138,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /q /y "$(SolutionDir)$(Configuration)Launcher\*.*" "H:\Development\Projects\Visual Studio\YuGiOh_PoC_Patcher\YGO_PoC_ModDLL\_Games\200612\"</Command>
+      <Command>xcopy /q /y "$(SolutionDir)_Temp\$(Configuration)Launcher\*.*" "$(SolutionDir)_Games\200612\"</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>COPY LAUNCHER EXE</Message>
@@ -157,8 +160,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(SolutionDir)$(Configuration)Launcher\*.exe" "$(SolutionDir)\ReleaseExport\" /q /y
-xcopy "$(SolutionDir)$(Configuration)Launcher\*.dll" "$(SolutionDir)\ReleaseExport\" /q /y</Command>
+      <Command>xcopy "$(SolutionDir)_Temp\$(Configuration)Launcher\*.exe" "$(SolutionDir)\_ReleaseExport\" /q /y
+xcopy "$(SolutionDir)_Temp\$(Configuration)Launcher\*.dll" "$(SolutionDir)\_ReleaseExport\" /q /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>EXE copy for release</Message>

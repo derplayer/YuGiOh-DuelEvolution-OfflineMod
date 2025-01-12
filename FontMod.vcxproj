@@ -102,6 +102,7 @@
     <IncludePath>./Detours/include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <TargetName>winmm</TargetName>
+    <OutDir>$(SolutionDir)_Temp\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_200703|Win32'">
     <LinkIncremental>true</LinkIncremental>
@@ -109,6 +110,7 @@
     <IncludePath>./Detours/include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <TargetName>winmm</TargetName>
+    <OutDir>$(SolutionDir)_Temp\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -130,6 +132,7 @@
     <IncludePath>./Detours/include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <TargetName>winmm</TargetName>
+    <OutDir>$(SolutionDir)_Temp\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

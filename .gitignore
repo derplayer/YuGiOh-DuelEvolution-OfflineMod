@@ -248,6 +248,7 @@ ModelManifest.xml
 _Games/
 
 # Other stuff
+_Temp/
 Yo2Launcher/Debug/
 Yo2Launcher/Release/
 ReleaseLauncher/

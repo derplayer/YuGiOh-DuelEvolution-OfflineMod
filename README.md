@@ -1,62 +1,82 @@
-# FontMod
-**English** [简体中文](README.zh_CN.md) [繁体中文](README.zh_TW.md)
+# Yu-Gi-Oh! Duel Evolution: Offline Mod
+A mod that allows duel against offline AI by using the Duel Evolution's developer debug mode.
+Inspired by [Yu-Gi-Oh! Master Duel offline mod](https://github.com/pixeltris/YgoMaster)
 
-Simple hook tool to change Win32 program font. Works with some GDI or Qt based program.
+# Discord
+https://discord.com/invite/GAKKaJYwF7
+Help wanted!
 
-> Proven workable on [Telegram Desktop](https://desktop.telegram.org/), [Kleopatra (Gpg4Win)](https://www.gpg4win.org/) and [Mendeley Desktop](https://www.mendeley.com/download-desktop/).
+# What is Yu-Gi-Oh! Duel Evolution?
+Yu-Gi-Oh! Duel Evolution was an official free game released at december 2006.
+You could get it from (the now shut-down) official website.
+[More infos here.](https://yugioh.fandom.com/wiki/Yu-Gi-Oh!_Online:_Duel_Evolution)
 
 # Usage
-[Download](https://github.com/ysc3839/FontMod/releases) `FontMod{32,64}.dll` and rename to one of following:  
-`dinput8.dll`, `dinput.dll`, `dsound.dll`, `d3d9.dll`, `d3d11.dll`, `ddraw.dll`, `winmm.dll`, `version.dll`, `d3d8.dll` (`d3d8.dll` is 32bit only).  
-Then put in the folder of program exe.  
-User font: Put fonts in `fonts` folder to use them directly, don't need to install to system.
+Only the 2006-12 client is supported. (yo2setup_061213_e.exe)
+[Download](https://github.com/ysc3839/FontMod/releases) the package and just extract it into the installed game.
 
-# Config file
-Will create `FontMod.yaml` on first run. Config file uses UTF-8 encoding. Support UTF-8 BOM.
-```yaml
-style: &style
-# Remove '#' to override font style
-#  size: 0
-#  width: 0
-#  weight: 0
-#  italic: false
-#  underLine: false
-#  strikeOut: false
-#  charSet: 0
-#  outPrecision: 0
-#  clipPrecision: 0
-#  quality: 0
-#  pitchAndFamily: 0
+# Game closes after start
+When the game closes instantly after start, your GPU has issues with Vulkan support. just remove following files:
+`d3d8.dll`, `d3d9.dll`, `d3d10cre.dll`, `d3d11.dll`, `dxgi.dll`  
+This will disable graphic fixes on modern operating system, but the game should then run.
 
-fonts:
-  SimSun: &zh-cn-font # Chinese (Simplified) fallback font
-    replace: Microsoft YaHei
-    <<: *style
-  PMingLiU: # Chinese (Traditional) fallback font
-    replace: Microsoft JhengHei UI
-    <<: *style
-  MS UI Gothic: # Japanese fallback font
-    replace: Yu Gothic UI
-    <<: *style
-  Gulim: # Korean fallback font
-    replace: 맑은 고딕
-    <<: *style
+# Antivirus issues
+Due to injecting a debugger dll (TitanEngine.dll) it causes trouble with some AV software. One way to fix it would be to fix the softlock properly.
+But i don't know how. Pull request are welcome!
 
-fixGSOFont: true # true is to use system UI font
-#fixGSOFont: *zh-cn-font # Or replace with user defined font
-debug: false
-```
-* fonts
-  * `key ("SimSun")`: Font name to modify.
-  * `replace` / `name`: Font name to replace.
-  * `size` `width` `weight` `italic` `underLine` `strikeOut` `charSet` `outPrecision` `clipPrecision` `quality` `pitchAndFamily`: Override original font style. Please refer to [MSDN docs](https://docs.microsoft.com/en-us/windows/desktop/api/wingdi/ns-wingdi-logfontw). If you don't want to override, delete these items.
+## What has the mod to offer?:
+* Fixing broken rendering on modern OS (via DXVK)
+* Implementation of separate Player/NPC custom decks
+* Fixed Deck Editor
+	- Or at least as much as it is possible, in the working game version it was still at prototype stage.
+	- To save the deck just press the "Exit" button. The deck will be saved to "deckOffline.ydc" file in the root folder of the game.
+* Fix the UI dialogs for broken cards (resolves the softlock partially)
+* Backporting of stuff from newer clients like
+	- Card *.bin files
+	- The new bin files were taken from the 2006-12-28 client, but are not thoroughly tested. But they do not introduce new cards to the pool, so it should be fine.
 
-* fixGSOFont
-Replace [GetStockObject](https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-getsyscolorbrush) font, the options is same as `fonts` above. If set to `true` will use [SystemParametersInfo](https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-systemparametersinfow#spi_getnonclientmetrics) to get system font.
+# FAQ:
+* How to edit a NPC deck in-game?
+	- Not possible at the moment. But you can edit the player deck, save it, make a copy and then rename the file from "deckOffline.ydc" to "deckOfflineCPU.ydc"
 
-* debug
-Debug mode (Will log information to FontMod.log).
+* What classifies as a broken card?
+	- There are four types of broken card
+	- Type A: The card is broken, but the mod fixes it.			Example: Kunai with Chain (The game would softlock without the mod)
+	- Type B: The card works but has some card effect issues.	Example: Monster Reborn (The reborn monster will spawn face-down and not face-up)
+	- Type C: The card works but has no effect coded.			Example: Cloak and Dagger (does nothing, has also no text in this version)
+	- Type D: The card crashes the game.						Example: none found (yet?)
+	- While Type A&B should be fixable in future, Type C&D would be too hard and are something that should be added to the game black list. 
+	- Feel free to make an issue ticket for an broken card.
 
-> YAML supports `anchors(&)` and `references (*)` (Please refer to [Wikipedia](https://en.wikipedia.org/wiki/YAML#Advanced_components)), this tool also supports not mandatory [Merge Key](https://yaml.org/type/merge.html) function in YAML spec. You can reuse data like config file above, and don't need to copy multiple times like JSON.
+* The deck editor doesn't show the trunk cards anymore?
+	-Press the button at the top right with the card trunk number. The filters are buggy.
 
-> If you want replace only CJK fonts and keep English font, you need to set `key` to CJK fallback font. This font may be different in different language environments. (For example in Chinese simplified environment is SimSun), you can use debug mode to find corresponding font.
+* I made a cool deck, can it be included in this mod?
+- Sure why not, submit it to this repo (the ydc file) and i will add it in the future as a community NPC deck. (Maybe even as an mini chibi NPC avatar walking on the game map with your nickname? haha)
+
+* Why not using a newer client?
+The debug duel mode is too broken inthose. I need help with this one, with someone that has more assembler/modding skills than me.
+
+# Future TODOs:
+* Stability fixes
+* UI tweaks
+* Blacklisting of broken cards
+* NPC deck editor from newer version
+
+# Far future TODOS:
+* Walking around on the game MAPs to challenge NPCs
+* Duel mode selection (normal duel/best of three/rock paper scissors)
+* Card progression system (Power of Chaos style, one won battle = one new card in deck chest/trunk)
+* Decks/NPCs from other Yu-Gi-Oh games
+	- With level/difficulty scaling. (Power of Chaos style)
+* Fixing of the broken card effects?
+	- Similar to what ZAZA would do in his [Power of Chaos tutorial videos.](https://www.youtube.com/watch?v=7YEWebk3QCQ)
+* Banlist
+* Player avatar customisation
+* Deck editor: load/save button functionality
+* ...and more? ¯\_(ツ)_/¯
+
+# Credits
+derplayer (mod creator)
+philyeahz (asm support)
+hassanabuldahab (menu/font GFX)

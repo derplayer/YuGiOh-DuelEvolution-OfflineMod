@@ -254,3 +254,4 @@ lib/Debug/
 lib/Release/
 DebugLauncher/
 Debug/
+_Debug/

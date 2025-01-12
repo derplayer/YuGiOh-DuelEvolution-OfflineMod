@@ -569,17 +569,17 @@ char __fastcall YGO2::cardstate_handle_reimpl(unsigned int a, unsigned int b) {
 	HANDLE hProcess = GetCurrentProcess();
 	DWORD jmpIdx;
 	if (ygoVer == YGO2_2007_03) {
-		if (!ReadProcessMemory(hProcess, (LPCVOID)WORD_00BEDAE0_200703, &jmpIdx, sizeof(jmpIdx), NULL)) {
+		if (!ReadProcessMemory(hProcess, (LPCVOID)BOARD_HANDLE_ID_200703, &jmpIdx, sizeof(jmpIdx), NULL)) {
 			MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
 		}
 	}
 	else {
-		if (!ReadProcessMemory(hProcess, (LPCVOID)WORD_00BEDAE0, &jmpIdx, sizeof(jmpIdx), NULL)) {
+		if (!ReadProcessMemory(hProcess, (LPCVOID)BOARD_HANDLE_ID_200610, &jmpIdx, sizeof(jmpIdx), NULL)) {
 			MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
 		}
 	}
 
-	printf("word_00BEDAE0 = %d\n", jmpIdx);
+	printf("BOARD_HANDLE_ID = %d\n", jmpIdx);
 	char ret = cardstate_handle_Return(a, b);
 	printf("return = %d\n", ret);
 
@@ -589,49 +589,266 @@ char __fastcall YGO2::cardstate_handle_reimpl(unsigned int a, unsigned int b) {
 int __cdecl YGO2::board_handle_reimpl(int a, int b, int c, unsigned int d, unsigned int e) {
 	HANDLE hProcess = GetCurrentProcess();
 
-	if (ygoVer == YGO2_2007_03) {
-		printf("BOARD_HANDLE: a=%d, b=%d, c=%d, d=%d, e=%d\n", a, b, c, d, e);
+	// TODO: Newer versions have different ids
+	// ID tables at: https://github.com/derplayer/YuGiOh-PoC-ModTools/wiki/YGO:-Information-corner-(v2)#card-board-operation-ids-2007-03
+	if (ygoVer == YGO2_2007_03 || ygoVer == YGO2_2006_12 || ygoVer == YGO2_2006_10) {
+		switch (a) {
+		case 1:
+			printf("DUEL_VIEW_DUEL_START\n");
+			break;
+		case 2:
+			printf("DUEL_VIEW_DUEL_END: iResult=%d\n", b);
+			break;
+		case 3:
+			printf("DUEL_VIEW_UNK_PLAYER_ID_RELATED\n"); // No string
+			break;
+		case 4:
+			printf("DUEL_VIEW_PHASE_CHANGE: iPlayer=%d iPhase=%d\n", b, c);
+			break;
+		case 5:
+			printf("DUEL_VIEW_TURN_CHANGE: iPlayer=%d\n", b);
+			break;
+		case 6:
+			printf("DUEL_VIEW_FIELD_CHANGE: iPlayer=%d\n", b);
+			break;
+		case 7:
+			printf("DUEL_VIEW_RUN_LIST: iPlayer=%d iPos=%d iIndex=%d\n", b, c, d);
+			break;
+		case 8:
+			printf("DUEL_VIEW_BGM_UPDATE\n");
+			break;
+		case 9:
+			printf("DUEL_VIEW_BATTLE_INIT: iPlayer=%d\n", b);
+			break;
+		case 10:
+			printf("DUEL_VIEW_BATTLE_END\n");
+			break;
+		case 11:
+			printf("DUEL_VIEW_BATTLE_ATTACK: iBtlSrc=%d iDefPlayer=%d iBtlDst=%d\n", b, c, d);
+			break;
+		case 12:
+			printf("DUEL_VIEW_BATTLE_RUN: damage1P=%d damage2P=%d flag1P=%d flag2P=%d\n", b, c, d, e);
+			break;
+		case 13:
+			printf("DUEL_VIEW_LIFE_SET: iPlayer=%d iLife=%d\n", b, c);
+			break;
+		case 14:
+			printf("DUEL_VIEW_LIFE_DAMAGE: iPlayer=%d iDamage=%d fWait=%d iType=%d\n", b, c, d, e);
+			break;
+		case 15:
+			printf("DUEL_VIEW_LIFE_RECOVER\n");
+			break;
+		case 16:
+			printf("DUEL_VIEW_HAND_SHUFFLE: iPlayer=%d\n", b);
+			break;
+		case 17:
+			printf("DUEL_VIEW_HAND_SHOW: iPlayer=%d iIndex=%d wUniqueID=%d\n", b, c, d);
+			break;
+		case 19:
+			printf("DUEL_VIEW_FIELD_CHANGE: iPlayer=%d\n", b);
+			break;
+		case 20:
+			printf("DUEL_VIEW_DECK_RESET: iPlayer=%d iLocate=%d iPlayer=%d wUniqueID=%d\n", b, c, d, e);
+			break;
+		case 21:
+			printf("DUEL_VIEW_DECK_FLIPTOP: iPlayer=%d iLocate=%d\n", b, c);
+			break;
+		case 22:
+			printf("DUEL_VIEW_GRAVE_TOP: iPlayer=%d iLocate=%d wCardID=%d\n", b, c, d);
+			break;
+		case 23:
+			printf("DUEL_VIEW_CARD_LOCKON: iPlayer=%d iLocate=%d iIndex=%d\n", b, c, d);
+			break;
+		case 24:
+			printf("DUEL_VIEW_CARD_MOVE: wEffect=%d wCardID=%d stFrom=%d stTo=%d\n", b, c, d, e);
+			break;
+		case 25:
+			printf("DUEL_VIEW_CARD_SWAP: stFrom=%d stTo=%d\n", b, c);
+			break;
+		case 26:
+			printf("DUEL_VIEW_UNK_26\n"); // No string
+			break;
+		case 27:
+			printf("DUEL_VIEW_UNK_27\n"); // No string
+			break;
+		case 28:
+			printf("DUEL_VIEW_CARD_SET: iPlayer=%d iLocate=%d fTurn=%d\n", b, c, d);
+			break;
+		case 29:
+			printf("DUEL_VIEW_CARD_BREAK: iPlayer=%d iPos=%d iIndex=%d wCardID=%d\n", b, c, d, e);
+			break;
+		case 30:
+			printf("DUEL_VIEW_CARD_EXPLOSION: iPlayer=%d iLocate=%d wCardID=%d\n", b, c, d);
+			break;
+		case 32:
+			printf("DUEL_VIEW_CARD_HAPPEN: wInternalID=%d\n", b);
+			break;
+		case 33:
+			printf("DUEL_VIEW_UNK_33\n"); // No string
+			break;
+		case 34:
+			printf("DUEL_VIEW_UNK_34\n"); // No string
+			break;
+		case 35:
+			printf("DUEL_VIEW_UNK_35\n"); // No string
+			break;
+		case 36:
+			printf("DUEL_VIEW_UNK_36_MISSING_IN_POST_BETA_VER\n"); // Could be CPU related
+			break;
+		case 37:
+			printf("DUEL_VIEW_UNK_37\n"); // No string
+			break;
+		case 38:
+			printf("DUEL_VIEW_UNK_38\n"); // No string
+			// No string
+			break;
+		case 39:
+			printf("DUEL_VIEW_MONST_SHUFFLE: iPlayer=%d wFlag=%d\n", b, c);
+			break;
+		case 40:
+			printf("DUEL_VIEW_UNK_40\n"); // No string
+			// No string
+			break;
+		case 41:
+			printf("DUEL_VIEW_UNK_41\n"); // No string
+			// No string
+			break;
+		case 42:
+			printf("DUEL_VIEW_UNK_42\n"); // No string
+			// No string
+			break;
+		case 43:
+			printf("DUEL_VIEW_UNK_43\n"); // No string
+			// No string
+			break;
+		case 44: // this one is merged with 41 in new vers, but not in 200610
+			printf("DUEL_VIEW_UNK_44_MERGED\n"); // No string
+			break;
+		case 45:
+			printf("DUEL_VIEW_UNK_46\n"); // No string
+			break;
+		case 46:
+			printf("DUEL_VIEW_CHAIN_SET: iPlayer=%d iSrcLocate=%d iNum=%d\n", b, c, d);
+			break;
+		case 47:
+			printf("DUEL_VIEW_CHAIN_RUN: iPlayer=%d iSrcLocate=%d iNum=%d\n", b, c, d);
+			break;
+		case 48:
+			printf("DUEL_VIEW_UNK_48_MISSING_IN_POST_BETA_VER\n"); // Could be CPU related
+			break;
+		case 49:
+			// TODO: its not matching the 200610 client, was rewritten?
+			if(ygoVer == YGO2_2006_10){
+				printf("DUEL_VIEW_RUN_DIALOG: unkId=%d iType=%d iParam=%d\n", b, c, d);
+				// TODO: the key to fix it could be: BOARD_HANDLE_ID2_200610 value - its used here
+				/*	
+					### Bugged special summon dialogue:
+					cardstate_handle: a=47437568, b=535270476
+					BOARD_HANDLE_ID = 290521165
+					return = 35
+					cardstate_handle: a=8, b=535270476
+					BOARD_HANDLE_ID = 1048610
+					DUEL_VIEW_UNK_36_MISSING_IN_POST_BETA_VER
+					return = 0
+					DUEL_VIEW_RUN_DIALOG: unkId=7 iType=247 iParam=65644
+					*softlock*
 
-		DWORD jmpIdx;
-		if (a == 20 && b == 0 && c == 12) {
-			//DUEL_VIEW_LIFE_SET iPlayer=0 iLife=8000
-			// a=13, b=0, c=8000, d=0, e=1
-			int ret = board_handle_Return(a, b, c, d, e);
+					### Bugged special summon dialogue with debugger hackfix:
+					cardstate_handle: a=766757176, b=618967404
+					BOARD_HANDLE_ID = 290521165
+					return = 35
+					cardstate_handle: a=8, b=618967404
+					BOARD_HANDLE_ID = 1048610
+					DUEL_VIEW_UNK_36_MISSING_IN_POST_BETA_VER
+					return = 0
+					DUEL_VIEW_RUN_DIALOG: unkId=7 iType=247 iParam=65644
+					###* CLICK ATTACK FACE UP *###
+					cardstate_handle: a=8, b=618967404
+					BOARD_HANDLE_ID = 290521184
+					DUEL_VIEW_UNK_63: a:63, b:0, c:4433, d:5
+				*/
+			}
+			else {
+				printf("DUEL_VIEW_RUN_DIALOG: s_sStr=%s iType=%d iParam=%d\n", reinterpret_cast<const char*>(b), c, d);
+			}
+			break;
+		case 50:
+			printf("DUEL_VIEW_RUN_LIST: iPlayer=%d iType=%d\n", b, c);
+			break;
+		case 51:
+			printf("DUEL_VIEW_RUN_SUMMON: iPlayer=%d iLocate=%d wInternalCardID=%d\n", b, c, d);
+			break;
+		case 52:
+			printf("DUEL_VIEW_RUN_SUMMON: CCardStatus=%d wInternalCardID=%d\n", b, c);
+			break;
+		case 53:
+			printf("DUEL_VIEW_RUN_FUSION: iPlayer=%d wCardID=%d iNum=%d\n", b, c, d);
+			break;
+		case 54:
+			printf("DUEL_VIEW_RUN_DETAIL: wInternalID=%d\n", b);
+			break;
+		case 55:
+			printf("DUEL_VIEW_DECK_FLIPTOP: iPlayer=%d iLocate=%d iNum=%d iFlash=%d iFace=%d\n", b, c, d, e, b);
+			break;
+		case 56:
+			printf("DUEL_VIEW_RUN_DICE: iPlayer=%d iLocate=%d iDice=%d\n", b, c, d);
+			break;
+		case 57:
+			printf("DUEL_VIEW_UNK_57_MISSING_IN_POST_BETA_VER\n"); // Could be CPU related
+			break;
+		case 58:
+			printf("DUEL_VIEW_RUN_FINISH\n");
+			break;
+		case 59:
+			printf("DUEL_VIEW_RUN_EXODIA\n");
+			break;
+		case 60:
+			printf("DUEL_VIEW_RUN_VIJA: iPlayer=%d iLocate=%d iIndex=%d fFinish=%d\n", b, c, d, e);
+			break;
+		case 61:
+			printf("DUEL_VIEW_UNK_61_MISSING_IN_POST_BETA_VER\n"); // Could be CPU related
+			break;
+		case 62:
+			printf("DUEL_VIEW_RUN_EXTRA\n");
+			break;
+		case 63: case 64: case 65: case 66: case 67: case 68: case 69:
+		case 70: case 71: case 72: case 73: case 74: case 75: case 76: case 77: case 78: case 79:
+		case 80: case 81: case 82: case 83: case 84: case 85: case 86: case 87: case 88: case 89:
+		case 90: case 91: case 92: case 93: case 94: case 95: case 96: case 97: case 98: case 99:
+		case 100: case 101: case 102: case 103:
+			printf("DUEL_VIEW_UNK_%d: a:%d, b:%d, c:%d, d:%d\n", a, a, b, c, d);
 
-			// test: replicate 2006 workflow
-			// TODO: something is missing to init. the duel gameloop properly.
-			//board_handle_Return(1, 0, 0, 0, 0);
-			
-			return ret;
+			if (a == 63) {
+				printf("DUEL_VIEW_UNK_%d_FLIP_FLAG_TRIGGER\n", a);
+				//DUEL_VIEW_UNK_63: a:63, b:0, c:4433, d:5 - face down fussion spawn
+				//DUEL_VIEW_UNK_63: a:63, b:0, c:4433, d:4 - face up fussion spawn
+				//d = 4; // sadly doesn't work
+			}
 
+			if (a == 67) {
+				printf("DUEL_VIEW_UNK_%d_FLIP_FLAG_TRIGGER\n", a);
+				// face-up/down & atack/defence position states for all card types
+				// id, playerId, cardId, faceflag
+				// DUEL_VIEW_UNK_67: a=67, b=0, c=4837, d=0 # magic card set face-down
+				// DUEL_VIEW_UNK_67: a=67, b=0, c=4837, d=1 # maigc card set face-up (activate)
+				// not enough to change the face-up state tho...
+				//d = 1; // sadly doesn't work
+			}
+
+			if (a == 69) {
+				printf("DUEL_VIEW_UNK_%d_FLIP_FLAG_TRIGGER\n", a);
+				// DUEL_VIEW_UNK_69: a:69, b:0, c:1, d:0 - fussion spawn in atk->def position (for both face down and face up)
+				// DUEL_VIEW_UNK_69: a:69, b:0, c:0, d:0 - fussion spawn in atk->atk position (for both face down and face up)
+			}
+
+			break;
+		default:
+			printf("Unknown operation ID: %d\n", a);
+			break;
 		}
-
-		int ret = board_handle_Return(a, b, c, d, e);
-		printf("return = %d\n", ret);
-		return ret;
 	}
 
-	// 2006-10
-	// ID table at: https://github.com/derplayer/YuGiOh-PoC-ModTools/wiki/YGO:-Information-corner-(v2)#card-board-operation-ids-2007-03
-	printf("BOARD_HANDLE: a=%d, b=%d, c=%d, d=%d, e=%d\n", a, b, c, d, e);
 	int ret = board_handle_Return(a, b, c, d, e);
-	printf("return = %d\n", ret);
-
-	// face-up/down & atack/defence position states for all card types
-	if (a == 63 || a == 64 || a == 65 || a == 66 || a == 67 || a == 68 || a == 69 || a == 70 || a == 71 || a == 72 || a == 73) {
-		//					   id,   unk, cardId, faceflag
-		// BOARD_HANDLE_board_handle: a=67, b=0, c=4837, d=0 # magic card set face-down
-		// BOARD_HANDLE_board_handle: a=67, b=0, c=4837, d=1 # maigc card set face-up (activate)
-		// not enough to change the face-up state tho...
-		// d = 1;
-		printf("!BOARD_HANDLE_OVERRIDE: a=%d, b=%d, c=%d, d=%d, e=%d\n", a, b, c, d, e);
-		return board_handle_Return(a, b, c, d, e);
-	}
-	//if (a == 24)
-	//	return board_handle_Return(2, 1, c, d); // DUEL_VIEW_CARD_MOVE - aka draw card
-	//if (a == 28)
-	//	return board_handle_Return(2, 1, c, d); // DUEL_VIEW_CARD_SET iPlayer=%d iLocate=%d fTurn=%d
-
 	return ret;
 }
 

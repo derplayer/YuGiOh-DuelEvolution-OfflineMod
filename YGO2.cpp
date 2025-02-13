@@ -307,122 +307,6 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 	// Get the handle to the current process
 	HANDLE hProcess = GetCurrentProcess();
 
-	// Read the pointer from the given offset
-	DWORD_PTR baseAddress;
-	if (!ReadProcessMemory(hProcess, (LPCVOID)PLAYER_DECKEDIT_PTR_200610, &baseAddress, sizeof(baseAddress), NULL)) {
-		MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
-	}
-
-	PrintMemory(baseAddress, "Deck editor memory (pre-hook)\n");
-
-	//DWORD_PTR unknownPtr;
-	//if (!ReadProcessMemory(hProcess, (LPCVOID)baseAddress, &unknownPtr, sizeof(unknownPtr), NULL)) {
-	//	std::cerr << "Failed to read memory" << std::endl;
-	//	return 1;
-	//}
-
-	//// Read the value at unknown POINTER
-	//WORD unkValue;
-	//if (!ReadProcessMemory(hProcess, (LPCVOID)unknownPtr, &unkValue, sizeof(unkValue), NULL)) {
-	//	std::cerr << "Failed to read memory" << std::endl;
-	//	return 1;
-	//}
-
-	// Add the offset to the base address
-	DWORD_PTR deckEditAddress_Card = baseAddress + 4;
-	DWORD_PTR deckEditAddress_Side = deckEditAddress_Card + (80*2);			//80 cards * 2 bytes
-	DWORD_PTR deckEditAddress_Xtra = deckEditAddress_Side + (15*2);			//15 side cards * 2 bytes
-	DWORD_PTR deckEditAddress_CardCnt = deckEditAddress_Xtra + (30*2);		//30 xtra cards * 2 bytes + 1 (variable)
-	DWORD_PTR deckEditAddress_SideCnt = deckEditAddress_CardCnt + 1;
-	DWORD_PTR deckEditAddress_XtraCnt = deckEditAddress_SideCnt + 1;
-
-	// MEMORY PRINT FROM DECK (x cards + 0 side + ALL extra fusion)
-	//AC 56 73 00 01 00 02 00  03 00 04 00 05 00 06 00
-	//07 00 08 00 09 00 0A 00  0B 00 0C 00 0D 00 0E 00
-	//0F 00 10 00 11 00 12 00  13 00 14 00 15 00 16 00
-	//17 00 18 00 19 00 1A 00  1B 00 1C 00 1D 00 1F 00
-	//20 00 21 00 22 00 23 00  24 00 25 00 26 00 27 00
-	//28 00 29 00 2A 00 2B 00  00 00 00 00 00 00 00 00
-	//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-	//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-	//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-	//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-	//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-	//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-	//00 00 0A 00 0A 00 1E 00  1E 00 26 00 1E 00 26 00
-	//30 00 30 00 30 00 88 00  88 00 88 00 8E 00 8E 00
-	//8E 00 B5 00 B5 00 B5 00  E3 00 E3 00 E3 00 04 01
-	//04 01 04 01 0B 01 0B 01  0B 01 20 01 20 01 
-	PrintMemoryVariable(baseAddress, 253, "Deck editor in memory (post)\n");
-	// after this follows the amount of cards in the fixed size byte array (2A) aka 42 / side deck (0) / and extra cards (1E) aka 30
-	// array allows max of 80/15/30 *2 = 250 bytes
-	// 2A 00 1E
-
-	// Read the value at the deckEditAddress_CardCnt pointer (to verify)
-	BYTE valueAtCardCount;
-	if (!ReadProcessMemory(hProcess, (LPCVOID)deckEditAddress_CardCnt, &valueAtCardCount, sizeof(valueAtCardCount), NULL)) {
-		std::cerr << "Failed to read memory" << std::endl;
-		return 1;
-	}
-
-	// Check if the value is 0x0200 (Armored Starfish)
-	//if (valueAtSecondCard == 0x0000) {
-	//	// Prepare the data to write
-	//	WORD dataToWrite[5] = { 0x0100, 0x0100, 0x0100, 0x0100, 0x0100 }; //CARD_ID
-
-	//	// Write the data to the final address
-	//	if (!WriteProcessMemory(hProcess, (LPVOID)secondCard, dataToWrite, sizeof(dataToWrite), NULL)) {
-	//		MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
-	//	}
-	//}
-
-	// TEST2 (kaban) - can be used to block broken cards
-	// PLAYER_KABAN_PTR_200610 for base
-	// PLAYER_KABAN_PTR_200610 + 4 for counter of set kaban
-	// PLAYER_KABAN_PTR_200610 + 14 for first card entry
-	// MAX: 2690 entrys (0A82)
-	// Read the pointer from the given offset
-	DWORD_PTR baseAddressKB;
-	if (!ReadProcessMemory(hProcess, (LPCVOID)PLAYER_KABAN_PTR_200610, &baseAddressKB, sizeof(baseAddressKB), NULL)) {
-		MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
-	}
-
-	PrintMemory(baseAddressKB, "\n0xKABAN\n");
-	DWORD_PTR addressKbCnt = baseAddressKB + 4;
-	DWORD_PTR addressKbFirst = baseAddressKB + 15;
-
-	DWORD kabanCount;
-	if (!ReadProcessMemory(hProcess, (LPCVOID)addressKbCnt, &kabanCount, sizeof(kabanCount), NULL)) {
-		std::cerr << "Failed to read memory" << std::endl;
-		return 1;
-	}
-
-	WORD firstKabanEntry;
-	if (!ReadProcessMemory(hProcess, (LPCVOID)addressKbFirst, &firstKabanEntry, sizeof(firstKabanEntry), NULL)) {
-		std::cerr << "Failed to read memory" << std::endl;
-		return 1;
-	}
-
-	// TEST: (unknown deck ptr?) - but seems to be not needed
-	//WORD dataToWriteTEST[2] = { 0x56AC, 0x7300 };
-	//if (!WriteProcessMemory(hProcess, (LPVOID)baseAddress, dataToWriteTEST, sizeof(dataToWriteTEST), NULL)) {
-	//		MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
-	//}
-	//PrintMemory(baseAddress, "DECK_EDIT_UNK_POINTER\n");
-
-	// Check if the value is 0x0003
-	//if (firstKabanEntry == 0x0000) { //0x0003
-	//	WORD kabanWrite[1] = { 0x03 }; //yo2 max is 255
-	//	// Write the data to the final address
-	//	if (!WriteProcessMemory(hProcess, (LPVOID)addressKbFirst, kabanWrite, sizeof(kabanWrite), NULL)) {
-	//		MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
-	//	}
-	//	if (!WriteProcessMemory(hProcess, (LPVOID)addressKbCnt, kabanWrite, sizeof(kabanWrite), NULL)) {
-	//		MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
-	//	}
-	//}
-	//PrintMemory(baseAddressKB, "0xKABAN_POST\n");
-	
 	// Scene implementation
 	char scnStr[32];
 	sprintf(scnStr, "Loading scene id: %d", sceneNumber);
@@ -430,22 +314,140 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 	POINT mouse = GetMousePositionInWindow();
 	bool enableFastTestDuel = false;
 	//int* duelModeDword = (int*)0x012A9084; // 200811
- 
+
 #ifdef _DEBUG
 	// skip main menu logic for fast testing of stuff like special summon issues
 	enableFastTestDuel = true;
 #endif 
 
 	// override scene
-	// important scene ids: 11 (unknown scene)
-	// 12 main ingame lobby (broken, starts deck edit scene when no deck), 13 tournament mode/tournament scene
-	// 15 (debug menu)
-	// 28 replay duel, 29 duel end scene, 30 replay janken
-	// 36 deck edit
-	//sceneNumber = 15; // forces debug menu at start
+// important scene ids: 11 (unknown scene)
+// 12 main ingame lobby (broken, starts deck edit scene when no deck), 13 tournament mode/tournament scene
+// 15 (debug menu)
+// 28 replay duel, 29 duel end scene, 30 replay janken
+// 36 deck edit
+//sceneNumber = 15; // forces debug menu at start
 
-	// YGO2_2006_10 aka 2006-12-13 Offline mode
+// YGO2_2006_10 aka 2006-12-13 Offline mode
 	if (ygoVer == YGO2_2006_10) {
+		// Read the pointer from the given offset
+		DWORD_PTR baseAddress;
+		if (!ReadProcessMemory(hProcess, (LPCVOID)PLAYER_DECKEDIT_PTR_200610, &baseAddress, sizeof(baseAddress), NULL)) {
+			MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
+		}
+
+		PrintMemory(baseAddress, "Deck editor memory (pre-hook)\n");
+
+		//DWORD_PTR unknownPtr;
+		//if (!ReadProcessMemory(hProcess, (LPCVOID)baseAddress, &unknownPtr, sizeof(unknownPtr), NULL)) {
+		//	std::cerr << "Failed to read memory" << std::endl;
+		//	return 1;
+		//}
+
+		//// Read the value at unknown POINTER
+		//WORD unkValue;
+		//if (!ReadProcessMemory(hProcess, (LPCVOID)unknownPtr, &unkValue, sizeof(unkValue), NULL)) {
+		//	std::cerr << "Failed to read memory" << std::endl;
+		//	return 1;
+		//}
+
+		// Add the offset to the base address
+		DWORD_PTR deckEditAddress_Card = baseAddress + 4;
+		DWORD_PTR deckEditAddress_Side = deckEditAddress_Card + (80 * 2);			//80 cards * 2 bytes
+		DWORD_PTR deckEditAddress_Xtra = deckEditAddress_Side + (15 * 2);			//15 side cards * 2 bytes
+		DWORD_PTR deckEditAddress_CardCnt = deckEditAddress_Xtra + (30 * 2);		//30 xtra cards * 2 bytes + 1 (variable)
+		DWORD_PTR deckEditAddress_SideCnt = deckEditAddress_CardCnt + 1;
+		DWORD_PTR deckEditAddress_XtraCnt = deckEditAddress_SideCnt + 1;
+
+		// MEMORY PRINT FROM DECK (x cards + 0 side + ALL extra fusion)
+		//AC 56 73 00 01 00 02 00  03 00 04 00 05 00 06 00
+		//07 00 08 00 09 00 0A 00  0B 00 0C 00 0D 00 0E 00
+		//0F 00 10 00 11 00 12 00  13 00 14 00 15 00 16 00
+		//17 00 18 00 19 00 1A 00  1B 00 1C 00 1D 00 1F 00
+		//20 00 21 00 22 00 23 00  24 00 25 00 26 00 27 00
+		//28 00 29 00 2A 00 2B 00  00 00 00 00 00 00 00 00
+		//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+		//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+		//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+		//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+		//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+		//00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+		//00 00 0A 00 0A 00 1E 00  1E 00 26 00 1E 00 26 00
+		//30 00 30 00 30 00 88 00  88 00 88 00 8E 00 8E 00
+		//8E 00 B5 00 B5 00 B5 00  E3 00 E3 00 E3 00 04 01
+		//04 01 04 01 0B 01 0B 01  0B 01 20 01 20 01 
+		PrintMemoryVariable(baseAddress, 253, "Deck editor in memory (post)\n");
+		// after this follows the amount of cards in the fixed size byte array (2A) aka 42 / side deck (0) / and extra cards (1E) aka 30
+		// array allows max of 80/15/30 *2 = 250 bytes
+		// 2A 00 1E
+
+		// Read the value at the deckEditAddress_CardCnt pointer (to verify)
+		BYTE valueAtCardCount;
+		if (!ReadProcessMemory(hProcess, (LPCVOID)deckEditAddress_CardCnt, &valueAtCardCount, sizeof(valueAtCardCount), NULL)) {
+			std::cerr << "Failed to read memory" << std::endl;
+			return 1;
+		}
+
+		// Check if the value is 0x0200 (Armored Starfish)
+		//if (valueAtSecondCard == 0x0000) {
+		//	// Prepare the data to write
+		//	WORD dataToWrite[5] = { 0x0100, 0x0100, 0x0100, 0x0100, 0x0100 }; //CARD_ID
+
+		//	// Write the data to the final address
+		//	if (!WriteProcessMemory(hProcess, (LPVOID)secondCard, dataToWrite, sizeof(dataToWrite), NULL)) {
+		//		MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
+		//	}
+		//}
+
+		// TEST2 (kaban) - can be used to block broken cards
+		// PLAYER_KABAN_PTR_200610 for base
+		// PLAYER_KABAN_PTR_200610 + 4 for counter of set kaban
+		// PLAYER_KABAN_PTR_200610 + 14 for first card entry
+		// MAX: 2690 entrys (0A82)
+		// Read the pointer from the given offset
+		DWORD_PTR baseAddressKB;
+		if (!ReadProcessMemory(hProcess, (LPCVOID)PLAYER_KABAN_PTR_200610, &baseAddressKB, sizeof(baseAddressKB), NULL)) {
+			MessageBox(NULL, "Failed to read memory", "Error", MB_OK | MB_ICONERROR);
+		}
+
+		PrintMemory(baseAddressKB, "\n0xKABAN\n");
+		DWORD_PTR addressKbCnt = baseAddressKB + 4;
+		DWORD_PTR addressKbFirst = baseAddressKB + 15;
+
+		DWORD kabanCount;
+		if (!ReadProcessMemory(hProcess, (LPCVOID)addressKbCnt, &kabanCount, sizeof(kabanCount), NULL)) {
+			std::cerr << "Failed to read memory" << std::endl;
+			return 1;
+		}
+
+		WORD firstKabanEntry;
+		if (!ReadProcessMemory(hProcess, (LPCVOID)addressKbFirst, &firstKabanEntry, sizeof(firstKabanEntry), NULL)) {
+			std::cerr << "Failed to read memory" << std::endl;
+			return 1;
+		}
+
+		// TEST: (unknown deck ptr?) - but seems to be not needed
+		//WORD dataToWriteTEST[2] = { 0x56AC, 0x7300 };
+		//if (!WriteProcessMemory(hProcess, (LPVOID)baseAddress, dataToWriteTEST, sizeof(dataToWriteTEST), NULL)) {
+		//		MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
+		//}
+		//PrintMemory(baseAddress, "DECK_EDIT_UNK_POINTER\n");
+
+		// Check if the value is 0x0003
+		//if (firstKabanEntry == 0x0000) { //0x0003
+		//	WORD kabanWrite[1] = { 0x03 }; //yo2 max is 255
+		//	// Write the data to the final address
+		//	if (!WriteProcessMemory(hProcess, (LPVOID)addressKbFirst, kabanWrite, sizeof(kabanWrite), NULL)) {
+		//		MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
+		//	}
+		//	if (!WriteProcessMemory(hProcess, (LPVOID)addressKbCnt, kabanWrite, sizeof(kabanWrite), NULL)) {
+		//		MessageBox(NULL, "Failed to write memory", "Error", MB_OK | MB_ICONERROR);
+		//	}
+		//}
+		//PrintMemory(baseAddressKB, "0xKABAN_POST\n");
+
+		// ### SCENE IMPL #####################################
+
 		// ONLY FOR TESTING: force debug menu
 		//MH_DisableHook(sceneMainLoopHook_Return);
 		//if (lastSceneId == -1) { sceneNumber = 13; lastSceneId = 26; }
@@ -459,7 +461,7 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 		if (lastSceneId == -1) { sceneNumber = 2; } // Overwrite default to logo scene (needed to init UI returns)
 		if (lastSceneId == 2 && sceneNumber == 3) { // logo scene -> cardswap engine init. scene
 			sceneNumber = 33;
-		}		
+		}
 		if (lastSceneId == 33 && sceneNumber == 13) { // cardswap scene -> menu
 
 			PrintMemoryVariable(deckEditAddress_Card, 253, "\n0xDECK_EDITOR_PRE\n");
@@ -483,7 +485,7 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 
 		//menu --> login (implicated)
 		//menu --> deck editor
-		if (lastSceneId == 3 && sceneNumber == 4){
+		if (lastSceneId == 3 && sceneNumber == 4) {
 			if (mouse.x >= 320 && mouse.x <= 704 && mouse.y >= 514 && mouse.y <= 561) {
 				// TODO: maybe we will need to use 31->32 here because of weird init stuff
 				sceneNumber = 32;
@@ -502,7 +504,7 @@ int __fastcall YGO2::scene_mainloop_reimpl(void* _this, void* x, int sceneNumber
 			applyNPCDeckToMemory();
 
 			sceneNumber = 24;
-		} 
+		}
 
 		// SETUP SWITCH (TODO)
 
@@ -738,10 +740,10 @@ int __cdecl YGO2::board_handle_reimpl(int a, int b, int c, unsigned int d, unsig
 			break;
 		case 49:
 			// TODO: its not matching the 200610 client, was rewritten?
-			if(ygoVer == YGO2_2006_10){
+			if (ygoVer == YGO2_2006_10) {
 				printf("DUEL_VIEW_RUN_DIALOG: unkId=%d iType=%d iParam=%d\n", b, c, d);
 				// TODO: the key to fix it could be: BOARD_HANDLE_ID2_200610 value - its used here
-				/*	
+				/*
 					### Bugged special summon dialogue:
 					cardstate_handle: a=47437568, b=535270476
 					BOARD_HANDLE_ID = 290521165
@@ -857,7 +859,7 @@ YGO2::YGO2(int ver, std::string verStr) {
 	// Fake a version number for older clients that do not have it set
 	if (ver == 0 && verStr == "Ver.061211.00") { ver = YGO2_2006_12; }
 	if (ver == 0 && verStr == "Ver.070321.00") { ver = YGO2_2007_03; }
-	
+
 	// Set version vars
 	ygoVer = ver;
 	ygoVerStr = verStr;
@@ -881,8 +883,8 @@ YGO2::YGO2(int ver, std::string verStr) {
 
 	// Set console window size
 	HWND hwndConsole = GetConsoleWindow();
-	MoveWindow(hwndConsole, 0, 0, 700, 768, TRUE);
-	//MoveWindow(hwndConsole, 0, 0, 320, 778, TRUE); // for Youtube
+	//MoveWindow(hwndConsole, 0, 0, 700, 768, TRUE);
+	MoveWindow(hwndConsole, 0, 0, 320, 778, TRUE); // for Youtube
 
 	std::cout << "Yu-Gi-Oh! Duel Evolution: Offline Mod - alpha test version 0." << YGO2_MODVERSION << ") started." << std::endl;
 	std::cout << "YGO2 (" << ygoVerStr << " - exeVer " << ygoVer << ") detected!" << std::endl;
@@ -936,13 +938,13 @@ YGO2::YGO2(int ver, std::string verStr) {
 		// discord link
 		//website = (char*)HTTP_WEBSITE_LINK_200610;
 		//strncpy(website, "127.0.0.1\0", 28);
-		
+
 		// SwapEngine scene string override to make it into a splash info screen
 		//PrintMemory(SCN_CARDSWAP_BTN_RETURN_PTR_200610, "STR_RESIZE_PRE\n");
 		offsets[0] = SCN_CARDSWAP_BTN_RETURN_PTR_200610 + 1;
 		offsets[1] = SCN_CARDSWAP_BTN_RETURN_PTR_200610 + 16;
 		ApplyTextToNewOffset("@1Click here to start.", offsets, sizeof(offsets) / sizeof(offsets[0]));
-		
+
 		offsets[0] = 0x00509361 + 1;
 		offsets[1] = 0x00509361 + 16;
 		// make the second button invisible
